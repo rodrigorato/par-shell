@@ -1,9 +1,18 @@
 #include <stdio.h>
-#include "commandlinereader/commandlinereader.h"
-#include "lists/list.h"
+#include <stdlib.h>
+#include <unistd.h>
+#include "commandlinereader.h"
+#include "list.h"
 
 int main(){
-	// eventualmente argc e argv? ainda nao li o projeto
-	printf("done\n");
+	char* argv[6]; argv[0] = NULL;
+	int read = 0, i;
+	read = readLineArguments(argv, 5);
+
+	printf("Number of read arguments: %d\n", read);
+
+	for(i=0; i<read; i++)
+		printf("%s\n", argv[i]);
+
 	return 0;
 }
