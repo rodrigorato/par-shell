@@ -12,7 +12,7 @@ list.o:
 	cd lists/ && gcc -Wall -g -c list.c && mv list.o ../list.o
 
 commandlinereader.o:
-	cd cmdlinerdr/ && gcc -Wall -g -c commandlinereader.c && mv commandlinereader.o ../commandlinereader.o
+	cd commandlinereader/ && gcc -Wall -g -c commandlinereader.c && mv commandlinereader.o ../commandlinereader.o
 
 clean: 
 	rm -f *.o par-shell

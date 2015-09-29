@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "cmdlinerdr/commandlinereader.h"
+#include "commandlinereader/commandlinereader.h"
 #include "lists/list.h"
 
 int main(){
