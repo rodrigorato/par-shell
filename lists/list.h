@@ -38,3 +38,6 @@ void update_terminated_process(list_t *list, int pid, time_t endtime);
 
 /* lst_print - print the content of list 'list' to standard output */
 void lst_print(list_t *list);
+
+/* lst_remove - removes the process with that pid  */
+int lst_remove(list_t *list, int pid);

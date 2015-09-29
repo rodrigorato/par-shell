@@ -66,3 +66,18 @@ void lst_print(list_t *list)
 	}
 	printf("-- end of list.\n");
 }
+
+int lst_remove(list_t *list, int pid){
+	lst_iitem_t *temp = list->first, *aux=NULL;
+	for(; temp && temp->pid != pid; aux=temp, temp=temp->next);
+	if(temp){
+		if(!aux)
+			// temos que tirar o primeiro
+			list->first = (list->first)->next;
+		else
+			aux->next=temp->next;
+		free(temp);
+		return 1;
+	}
+	return 0;
+}
