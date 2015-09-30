@@ -21,4 +21,4 @@ fibonacci.o: fibonacci.c
 	gcc -Wall -g -c fibonacci.c
 
 clean: 
-	rm -f *.o par-shell
+	rm -f *.o par-shell fibonacci
