@@ -16,6 +16,9 @@ int main(int argc, char* argv[]){
 	/* Assumes fork returns something */
 	int forkId;
 
+	/* Declares the vector we use to store inputs and sets all positions to NULL */
+	char* inputVector[PATHNAME_MAX_ARGS+2] = {};
+
 	/* Initializes a list where we store the processes ran by the shell */
 	list_t *processList = lst_new(); 
 
@@ -23,10 +26,6 @@ int main(int argc, char* argv[]){
 		perror("WHY YOU NO MEMORY?!?\n");
 		return 0;
 	}
-
-	/* Declares the vector we use to store inputs and sets the 0th position to NULL */
-	char* inputVector[PATHNAME_MAX_ARGS+2]; inputVector[0] = NULL; 
-	
 
 	readLineArguments(inputVector, PATHNAME_MAX_ARGS+2);
 	/* Cheeky OR ;) */
@@ -51,17 +50,21 @@ int main(int argc, char* argv[]){
 			exit(EXIT_FAILURE);
 		}
 
-		for(i=0;inputVector[i];i++){
-			free(inputVector[i]);
-		}
+		
 
 		readLineArguments(inputVector, PATHNAME_MAX_ARGS+2);
 	}
 
-	//does end program stuff
-	
+	/*
+	for(i=0; i<2; i++){
+			printf("%s\n", inputVector[i]);
+			free(inputVector[i]);
+	}
+	*/
+
+
 	for(i = lst_sizeof(processList); i>0; i--){
-		/* must verify if child was sucessfull */
+		/* must verify if child was sucessful */
 		pid = wait(&status);
 		if (WIFEXITED(status)){
 			if (WEXITSTATUS(status) == EXIT_SUCCESS){
@@ -73,9 +76,6 @@ int main(int argc, char* argv[]){
 	}
 	/* to check start and end times 
 	lst_print(processList); */
-
-	free(inputVector[0]);
-
 	lst_destroy(processList);
 
 	return 0;
