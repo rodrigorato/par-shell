@@ -46,7 +46,7 @@ int insert_new_process(list_t *list, int pid, time_t starttime)
 	item->next = list->first;
 	(list->lst_size)++;
 	list->first = item;
-	printf("started process with pid: %d\n", pid);
+	/* printf("started process with pid: %d\n", pid); */
 	return 1;
 }
 
@@ -76,7 +76,6 @@ void lst_print(list_t *list)
 
 	printf("Process list with start and end time:\n");
 	item = list->first;
-	/* while(1){ */ /* use it only to demonstrate gdb potencial */
 	while (item != NULL){
 		printf("%d\t%s", item->pid, ctime(&(item->starttime)));
 		printf("\t%s", ctime(&(item->endtime)));
