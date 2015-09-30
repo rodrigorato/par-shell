@@ -47,8 +47,8 @@ int main(int argc, char* argv[]){
 			/* Child process' code */
 			execv(inputVector[0], inputVector);
 			perror("oops\n");
-			exit(0);
-			/*exit(EXIT_FAILURE); */
+			//exit(0);
+			exit(EXIT_FAILURE);
 		}
 
 
@@ -60,7 +60,10 @@ int main(int argc, char* argv[]){
 	for(i = lst_sizeof(processList); i>0; i--){
 		/* must verify if child was sucessfull */
 		pid = wait(&status);
-		printf("pid:%d\texit-code:%d\n", pid, status);
+		if (WIFEXITED(status)){
+			if (WEXITSTATUS(status) == EXIT_SUCCESS)
+				printf("pid:%d\texit-code:%d\n", pid, status);
+		}
 	}
 
 	lst_destroy(processList);
