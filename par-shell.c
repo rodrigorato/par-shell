@@ -3,6 +3,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <time.h>
+#include <wait.h>
 #include "commandlinereader.h"
 #include "list.h"
 
