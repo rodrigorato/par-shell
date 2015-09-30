@@ -39,13 +39,16 @@ int main(int argc, char* argv[]){
 		}
 		else if (forkId > 0){
 			/* Parent process' code */
+			/* time(NULL) returns the actual time in time_t struct, from time.h*/
 			insert_new_process(processList, forkId, time(NULL)); // proteger isto
 		}
 		else{
+			/* HOW CAN WE VERIFY IF PATHNAME IS VALID? */
 			/* Child process' code */
 			execv(inputVector[0], inputVector);
 			perror("oops\n");
 			exit(0);
+			/*exit(EXIT_FAILURE); */
 		}
 
 
@@ -55,6 +58,7 @@ int main(int argc, char* argv[]){
 	//does end program stuff
 	
 	for(i = lst_sizeof(processList); i>0; i--){
+		/* must verify if child was sucessfull */
 		pid = wait(&status);
 		printf("pid:%d\texit-code:%d\n", pid, status);
 	}
