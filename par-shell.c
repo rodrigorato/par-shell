@@ -14,7 +14,7 @@ int main(int argc, char* argv[]){
 	int forkId;
 
 	/* Initializes a list where we store the processes ran by the shell */
-	list_t processList = lst_new(); 
+	list_t *processList = lst_new(); 
 
 	if(!processList){
 		perror("WHY YOU NO MEMORY?!?\n");
@@ -44,8 +44,8 @@ int main(int argc, char* argv[]){
 			perror("oops\n");
 			exit(0);
 		}
-		
-		
+
+
 		readLineArguments(inputVector, PATHNAME_MAX_ARGS+2);
 	}
 
