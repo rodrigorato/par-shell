@@ -29,7 +29,7 @@ void lst_destroy(list_t *list){
 		nextitem = item->next;
 		free(item);
 		item = nextitem;
-	}
+  	}
 	free(list);
 }
 
