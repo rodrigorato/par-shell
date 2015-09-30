@@ -10,19 +10,20 @@
 
 
 
-list_t* lst_new()
-{
-   list_t *list;
-   list = (list_t*) malloc(sizeof(list_t));
-   list->first = NULL;
-   return list;
+list_t* lst_new(){
+	list_t *list;
+	list = (list_t*) malloc(sizeof(list_t));
+   	if(list){
+   		list->first = NULL;
+   		list->lst_size = 0;
+   	}
+   	return list;
 }
 
 
-void lst_destroy(list_t *list)
-{
+void lst_destroy(list_t *list){
+/* lst_size will get destroyed , since it works w/o */
 	struct lst_iitem *item, *nextitem;
-
 	item = list->first;
 	while (item != NULL){
 		nextitem = item->next;
@@ -33,22 +34,34 @@ void lst_destroy(list_t *list)
 }
 
 
-void insert_new_process(list_t *list, int pid, time_t starttime)
+int insert_new_process(list_t *list, int pid, time_t starttime)
 {
 	lst_iitem_t *item;
 
 	item = (lst_iitem_t *) malloc (sizeof(lst_iitem_t));
+
 	item->pid = pid;
 	item->starttime = starttime;
 	item->endtime = 0;
 	item->next = list->first;
+	(list->lst_size)++;
 	list->first = item;
+	printf("started process with pid: %d\n", pid);
 }
 
 
 void update_terminated_process(list_t *list, int pid, time_t endtime)
 {
-   printf("teminated process with pid: %d\n", pid);
+	lst_iitem_t *temp = list->first;
+	for(; temp!=NULL; temp=temp->next){
+		if((temp->pid) == pid)){
+			temp->endtime = endtime;
+			printf("teminated process with pid: %d\n", pid);	
+			break;
+		}
+	}
+	if(!temp)
+		printf("no process with pid: %s\n", pid);
 }
 
 
