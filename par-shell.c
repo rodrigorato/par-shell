@@ -43,7 +43,7 @@ int main(int argc, char* argv[]){
 			insert_new_process(processList, forkId, time(NULL)); // proteger isto
 		}
 		else{
-			/* HOW CAN WE VERIFY IF PATHNAME IS VALID? */
+			/* HOW CAN WE VERIFY IF PATHNAME IS VALID? - we dont*/
 			/* Child process' code */
 			execv(inputVector[0], inputVector);
 			perror("oops\n");
@@ -61,11 +61,15 @@ int main(int argc, char* argv[]){
 		/* must verify if child was sucessfull */
 		pid = wait(&status);
 		if (WIFEXITED(status)){
-			if (WEXITSTATUS(status) == EXIT_SUCCESS)
+			if (WEXITSTATUS(status) == EXIT_SUCCESS){
 				printf("pid:%d\texit-code:%d\n", pid, status);
+				/* update_terminated_process(processList, pid, time(NULL));
+				   they terminate all at the same time */
+			}	
 		}
 	}
-
+	/* to check start and end times 
+	lst_print(processList); */
 	lst_destroy(processList);
 
 	return 0;
