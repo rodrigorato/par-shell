@@ -33,7 +33,7 @@ void lst_destroy(list_t *);
 /* insert_new_process - insert a new item with process id and its start time in list 'list' */
 void insert_new_process(list_t *list, int pid, time_t starttime);
 
-/* lst_remove - remove first item of value 'value' from list 'list' */
+/* update_terminated_process - inserts the end time in the item with pid recieved */
 void update_terminated_process(list_t *list, int pid, time_t endtime);
 
 /* lst_print - print the content of list 'list' to standard output */
