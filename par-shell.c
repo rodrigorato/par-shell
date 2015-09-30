@@ -53,12 +53,12 @@ int main(int argc, char* argv[]){
 
 	//does end program stuff
 	
-	for(i = lst_sizeof(inputVector); i>0; i--){
+	for(i = lst_sizeof(processList); i>0; i--){
 		pid = wait(&status);
 		printf("pid:%d\texit-code:%d\n", pid, status);
 	}
 
-	lst_destroy(inputVector);
+	lst_destroy(processList);
 
 	return 0;
 }
