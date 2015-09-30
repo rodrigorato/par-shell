@@ -51,7 +51,6 @@ int main(int argc, char* argv[]){
 			exit(EXIT_FAILURE);
 		}
 
-
 		readLineArguments(inputVector, PATHNAME_MAX_ARGS+2);
 	}
 

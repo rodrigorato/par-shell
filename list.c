@@ -94,6 +94,7 @@ int lst_remove(list_t *list, int pid){
 		else
 			aux->next=temp->next;
 		free(temp);
+		list->lst_size--;
 		return 1;
 	}
 	return 0;
