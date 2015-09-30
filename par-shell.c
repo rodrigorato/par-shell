@@ -9,6 +9,8 @@
 #define PATHNAME_MAX_ARGS 5
 
 int main(int argc, char* argv[]){
+	/* Aux variable to wait for them child processes */
+	int i = 0, pid = 0, status = 0;
 
 	/* Assumes fork returns something */
 	int forkId;
@@ -50,6 +52,13 @@ int main(int argc, char* argv[]){
 	}
 
 	//does end program stuff
+	
+	for(i = lst_sizeof(inputVector); i>0; i--){
+		pid = wait(&status);
+		printf("pid:%d\texit-code:%d\n", pid, status);
+	}
+
+	lst_destroy(inputVector);
 
 	return 0;
 }
