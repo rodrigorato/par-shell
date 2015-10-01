@@ -70,11 +70,12 @@ int main(int argc, char* argv[]){
 		/* must verify if child was sucessful */
 		pid = wait(&status);
 		if (WIFEXITED(status)){
-			if (WEXITSTATUS(status) == EXIT_SUCCESS){
+			update_terminated_process(processList, pid, time(NULL), status);
+			//if (WEXITSTATUS(status) == EXIT_SUCCESS){
 				//printf("pid:%d\texit-code:%d\n", pid, status);
 				/* update_terminated_process(processList, pid, time(NULL));
 				   they terminate all at the same time */
-			}	
+			//}	
 		}
 	}
 	lst_print(processList);

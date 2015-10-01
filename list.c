@@ -52,13 +52,14 @@ int insert_new_process(list_t *list, int pid, time_t starttime)
 }
 
 
-void update_terminated_process(list_t *list, int pid, time_t endtime)
+void update_terminated_process(list_t *list, int pid, time_t endtime,int status)
 {
 	lst_iitem_t *temp = list->first;
 	for(; temp!=NULL; temp=temp->next){
 		if((temp->pid) == pid){
 			temp->endtime = endtime;
-			printf("teminated process with pid: %d\n", pid);	
+			temp->status = status;
+			//printf("teminated process with pid: %d\n", pid);	
 			break;
 		}
 	}
@@ -80,7 +81,7 @@ void lst_print(list_t *list)
 	while (item != NULL){
 		printf("%d\t%s", item->pid, ctime(&(item->starttime)));
 		printf("\t%s", ctime(&(item->endtime)));
-		printf("Status:\t%d\n",item->status);
+		printf("\tStatus:\t%d\n",item->status);
 		item = item->next;
 	}
 	printf("-- end of list.\n");
