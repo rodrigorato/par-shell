@@ -15,6 +15,7 @@ typedef struct lst_iitem {
    int pid;
    time_t starttime;
    time_t endtime;
+   int status;
    struct lst_iitem *next;
 } lst_iitem_t;
 

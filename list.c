@@ -43,6 +43,7 @@ int insert_new_process(list_t *list, int pid, time_t starttime)
 	item->pid = pid;
 	item->starttime = starttime;
 	item->endtime = 0;
+	item->status = 0;
 	item->next = list->first;
 	(list->lst_size)++;
 	list->first = item;
@@ -79,6 +80,7 @@ void lst_print(list_t *list)
 	while (item != NULL){
 		printf("%d\t%s", item->pid, ctime(&(item->starttime)));
 		printf("\t%s", ctime(&(item->endtime)));
+		printf("Status:\t%d\n",item->status);
 		item = item->next;
 	}
 	printf("-- end of list.\n");

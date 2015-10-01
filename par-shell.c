@@ -71,12 +71,13 @@ int main(int argc, char* argv[]){
 		pid = wait(&status);
 		if (WIFEXITED(status)){
 			if (WEXITSTATUS(status) == EXIT_SUCCESS){
-				printf("pid:%d\texit-code:%d\n", pid, status);
+				//printf("pid:%d\texit-code:%d\n", pid, status);
 				/* update_terminated_process(processList, pid, time(NULL));
 				   they terminate all at the same time */
 			}	
 		}
 	}
+	lst_print(processList);
 	/* to check start and end times 
 	lst_print(processList); */
 	lst_destroy(processList);
