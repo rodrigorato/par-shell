@@ -40,6 +40,7 @@ int main(int argc, char* argv[]){
 			/* Parent process' code */
 			/* time(NULL) returns the actual time in time_t struct, from time.h*/
 			insert_new_process(processList, forkId, time(NULL)); // proteger isto
+			free(inputVector[0]);
 		}
 		else{
 			/* HOW CAN WE VERIFY IF PATHNAME IS VALID? - we dont*/
@@ -54,6 +55,8 @@ int main(int argc, char* argv[]){
 
 		readLineArguments(inputVector, PATHNAME_MAX_ARGS+2);
 	}
+
+	free(inputVector[0]);
 
 	/*
 	for(i=0; i<2; i++){
