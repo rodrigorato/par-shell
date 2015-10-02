@@ -81,7 +81,7 @@ void lst_print(list_t *list)
 	lst_iitem_t *item;
 
 	printf("\nPROCESS LIST:\n"
-		   "%-6s\t%-4s\t%-10s\t%-10s\t%-s\n", "PID", "STATUS", "START TIME", "END TIME", "CMD");
+		   "%-6s\t%-4s\t%-10s\t%-10s\t%-s\n", "PID", "STATUS", "START TIME", "END TIME", "COMMAND");
 	item = list->first;
 	while (item != NULL){
 		//char* start_time = ctime(&(item->starttime));
