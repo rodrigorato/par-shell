@@ -56,7 +56,7 @@ int main(int argc, char* argv[]){
 			 * [!] If there isn't enough memory to keep track of the child process,
 			 * 	   it will still be running.
 			 **/
-			if(!insert_new_process(processList, forkId, time(NULL)))
+			if(!insert_new_process(processList, forkId, time(NULL))) 
 				fprintf(stderr, "Child with PID:%d was lost because "
 								"you didn't have enough memory to save it, "
 								"it's still running.\n", forkId);

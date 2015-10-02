@@ -1,17 +1,9 @@
-/*
- * list.h - definitions and declarations of the integer list 
- */
-
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
 
-
-
-
-/* lst_iitem - each element of the list points to the next element */
-typedef struct lst_iitem {
+/* We use this struct to save processes on the list */
+typedef struct lst_iitem{
    int pid;
    time_t starttime;
    time_t endtime;
@@ -19,32 +11,34 @@ typedef struct lst_iitem {
    struct lst_iitem *next;
 } lst_iitem_t;
 
-/* list_t */
-typedef struct {
+/* List instance */
+typedef struct{
    lst_iitem_t * first;
    int lst_size;
 } list_t;
 
 
 
-/* lst_new - allocates memory for list_t and initializes it */
+/* Allocates memory for list_t and initializes it, returning a pointer to it */
 list_t* lst_new();
 
-/* lst_destroy - free memory of list_t and all its items */
+/* Deallocates all the memory needed for the list. */
 void lst_destroy(list_t *list);
 
-/* 	insert_new_process - insert a new item with process id and its start time in list 'list' 
-	0 se deu bosta, outra coisa se funcionou												*/
+/* Inserts a new process into the list, if there was a problem allocating memory
+ * it returns 0. The return value is 1 if there was no problem. */
 int insert_new_process(list_t *list, int pid, time_t starttime);
 
-/* update_terminated_process - inserts the end time in the item with pid recieved */
+/* Updates the process info with it's endtime and exit status. */
 void update_terminated_process(list_t *list, int pid, time_t endtime, int status);
 
-/* lst_sizeof - return the number of items in the list*/
+/* Returns the number of processes stored on the list, running or not. */
 int lst_sizeof(list_t *list);
 
-/* lst_print - print the content of list 'list' to standard output */
+/* Prints the list into the stdout stream */
 void lst_print(list_t *list);
 
-/* lst_remove - removes the process with that pid  */
+/* Removes the process with that pid from the list
+ * Return value is 0 if the process wasn't found
+ * else, the return value is 1	*/
 int lst_remove(list_t *list, int pid);

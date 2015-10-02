@@ -1,8 +1,3 @@
-/*
- * list.c - implementation of the integer list functions 
- */
-
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
@@ -22,7 +17,6 @@ list_t* lst_new(){
 
 
 void lst_destroy(list_t *list){
-/* lst_size will get destroyed , since it works w/o */
 	struct lst_iitem *item, *nextitem;
 	item = list->first;
 	while (item != NULL){
@@ -47,7 +41,6 @@ int insert_new_process(list_t *list, int pid, time_t starttime)
 	item->next = list->first;
 	(list->lst_size)++;
 	list->first = item;
-	/* printf("started process with pid: %d\n", pid); */
 	return 1;
 }
 
@@ -59,7 +52,6 @@ void update_terminated_process(list_t *list, int pid, time_t endtime,int status)
 		if((temp->pid) == pid){
 			temp->endtime = endtime;
 			temp->status = status;
-			//printf("teminated process with pid: %d\n", pid);	
 			break;
 		}
 	}
@@ -92,7 +84,6 @@ int lst_remove(list_t *list, int pid){
 	for(; temp && temp->pid != pid; aux=temp, temp=temp->next);
 	if(temp){
 		if(!aux)
-			// temos que tirar o primeiro
 			list->first = (list->first)->next;
 		else
 			aux->next=temp->next;
