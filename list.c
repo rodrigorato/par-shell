@@ -39,8 +39,16 @@ int insert_new_process(list_t *list, int pid, time_t starttime, char* cmd)
 	item->starttime = starttime;
 	item->endtime = 0;
 	item->status = 0;
-	item->cmd = (char*) malloc(sizeof(char)*(strlen(cmd)+1));
-	strcpy(item->cmd, cmd);
+
+	if(cmd){
+		item->cmd = (char*) malloc(sizeof(char)*(strlen(cmd)+1));
+		strcpy(item->cmd, cmd);
+	}
+	else{
+		item->cmd = (char*) malloc(sizeof(char)*7);
+		strcpy(item->cmd, "(null)");
+	}
+
 	item->next = list->first;
 	(list->lst_size)++;
 	list->first = item;
@@ -72,7 +80,7 @@ void lst_print(list_t *list)
 	// We can print times here if needed
 	lst_iitem_t *item;
 
-	printf("%-7s\t%-4s\t%-s\n", "PID", "STATUS", "CMD");
+	printf("\nPROCESS LIST:\n%-7s\t%-4s\t%-s\n", "PID", "STATUS", "CMD");
 	item = list->first;
 	while (item != NULL){
 		/*
@@ -84,7 +92,7 @@ void lst_print(list_t *list)
 		printf("%-7d\t%-4d\t%-s\n", item->pid, item->status, item->cmd);
 		item = item->next;
 	}
-	printf("\n");
+	
 }
 
 int lst_remove(list_t *list, int pid){
