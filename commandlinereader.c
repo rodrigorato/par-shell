@@ -56,7 +56,6 @@ int readLineArguments(char **argVector, int vectorSize)
     argVector[i] = NULL;
   }
    
-  //free(str);
   return numtokens;
 }
 
