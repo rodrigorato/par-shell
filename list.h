@@ -38,7 +38,7 @@ void lst_destroy(list_t *list);
 int insert_new_process(list_t *list, int pid, time_t starttime);
 
 /* update_terminated_process - inserts the end time in the item with pid recieved */
-void update_terminated_process(list_t *list, int pid, time_t endtime,int status);
+void update_terminated_process(list_t *list, int pid, time_t endtime, int status);
 
 /* lst_sizeof - return the number of items in the list*/
 int lst_sizeof(list_t *list);
