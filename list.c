@@ -1,8 +1,8 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <time.h>
 #include "list.h"
-
 
 
 list_t* lst_new(){
@@ -21,6 +21,7 @@ void lst_destroy(list_t *list){
 	item = list->first;
 	while (item != NULL){
 		nextitem = item->next;
+		free(item->cmd);
 		free(item);
 		item = nextitem;
   	}
@@ -28,7 +29,7 @@ void lst_destroy(list_t *list){
 }
 
 
-int insert_new_process(list_t *list, int pid, time_t starttime)
+int insert_new_process(list_t *list, int pid, time_t starttime, char* cmd)
 {
 	lst_iitem_t *item;
 	item = (lst_iitem_t *) malloc (sizeof(lst_iitem_t));
@@ -38,6 +39,8 @@ int insert_new_process(list_t *list, int pid, time_t starttime)
 	item->starttime = starttime;
 	item->endtime = 0;
 	item->status = 0;
+	item->cmd = (char*) malloc(sizeof(char)*(strlen(cmd)+1));
+	strcpy(item->cmd, cmd);
 	item->next = list->first;
 	(list->lst_size)++;
 	list->first = item;
@@ -66,17 +69,22 @@ int lst_sizeof(list_t *list){
 
 void lst_print(list_t *list)
 {
+	// We can print times here if needed
 	lst_iitem_t *item;
 
-	printf("Process list with start and end time:\n");
+	printf("%-7s\t%-4s\t%-s\n", "PID", "STATUS", "CMD");
 	item = list->first;
 	while (item != NULL){
-		printf("%d\t%s", item->pid, ctime(&(item->starttime)));
+		/*
+		printf("%s:%d\t%s", item->cmd, item->pid, ctime(&(item->starttime)));
 		printf("\t%s", ctime(&(item->endtime)));
 		printf("\tStatus:\t%d\n",item->status);
+		*/
+
+		printf("%-7d\t%-4d\t%-s\n", item->pid, item->status, item->cmd);
 		item = item->next;
 	}
-	printf("-- end of list.\n");
+	printf("\n");
 }
 
 int lst_remove(list_t *list, int pid){
@@ -87,6 +95,7 @@ int lst_remove(list_t *list, int pid){
 			list->first = (list->first)->next;
 		else
 			aux->next=temp->next;
+		free(temp->cmd);
 		free(temp);
 		list->lst_size--;
 		return 1;

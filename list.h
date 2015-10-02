@@ -8,6 +8,7 @@ typedef struct lst_iitem{
    time_t starttime;
    time_t endtime;
    int status;
+   char* cmd;
    struct lst_iitem *next;
 } lst_iitem_t;
 
@@ -27,7 +28,7 @@ void lst_destroy(list_t *list);
 
 /* Inserts a new process into the list, if there was a problem allocating memory
  * it returns 0. The return value is 1 if there was no problem. */
-int insert_new_process(list_t *list, int pid, time_t starttime);
+int insert_new_process(list_t *list, int pid, time_t starttime, char* cmd);
 
 /* Updates the process info with it's endtime and exit status. */
 void update_terminated_process(list_t *list, int pid, time_t endtime, int status);
