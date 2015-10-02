@@ -2,10 +2,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <time.h>
 #include <wait.h>
 #include "commandlinereader.h"
 #include "list.h"
+#include "time_helper.h"
 
 #define PATHNAME_MAX_ARGS 5
 
@@ -56,7 +56,7 @@ int main(int argc, char* argv[]){
 			 * [!] If there isn't enough memory to keep track of the child process,
 			 * 	   it will still be running.
 			 **/
-			if(!insert_new_process(processList, forkId, time(NULL), inputVector[0])) 
+			if(!insert_new_process(processList, forkId, GET_CURRENT_TIME(), inputVector[0])) 
 				fprintf(stderr, "Child with PID:%d was lost because "
 								"you didn't have enough memory to save it, "
 								"it's still running.\n", forkId);
@@ -86,7 +86,7 @@ int main(int argc, char* argv[]){
 	 **/
 	for(i = lst_sizeof(processList); i>0; i--){
 		pid = wait(&status);
-		update_terminated_process(processList, pid, time(NULL), status);
+		update_terminated_process(processList, pid, GET_CURRENT_TIME(), status);
 	}
 
 	/* Prints info about every chil process to the user */

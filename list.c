@@ -3,9 +3,7 @@
 #include <string.h>
 #include <time.h>
 #include "list.h"
-
-// Not so simple macro useful to print a calendar time as H:M:S
-#define PRINT_TIME_T_AS_HMS(timet) printf("%.8s", &(ctime(&(timet)))[11])
+#include "time_helper.h"
 		
 
 list_t* lst_new(){
