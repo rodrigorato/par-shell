@@ -4,6 +4,9 @@
 #include <time.h>
 #include "list.h"
 
+// Not so simple macro useful to print a calendar time as H:M:S
+#define PRINT_TIME_T_AS_HMS(timet) printf("%.8s", &(ctime(&(timet)))[11])
+		
 
 list_t* lst_new(){
 	list_t *list;
@@ -77,19 +80,24 @@ int lst_sizeof(list_t *list){
 
 void lst_print(list_t *list)
 {
-	// We can print times here if needed
 	lst_iitem_t *item;
 
-	printf("\nPROCESS LIST:\n%-7s\t%-4s\t%-s\n", "PID", "STATUS", "CMD");
+	printf("\nPROCESS LIST:\n"
+		   "%-6s\t%-4s\t%-10s\t%-10s\t%-s\n", "PID", "STATUS", "START TIME", "END TIME", "CMD");
 	item = list->first;
 	while (item != NULL){
-		/*
-		printf("%s:%d\t%s", item->cmd, item->pid, ctime(&(item->starttime)));
-		printf("\t%s", ctime(&(item->endtime)));
-		printf("\tStatus:\t%d\n",item->status);
-		*/
+		//char* start_time = ctime(&(item->starttime));
 
-		printf("%-7d\t%-4d\t%-s\n", item->pid, item->status, item->cmd);
+		/*printf("%s:%d\t%s", item->cmd, item->pid, ctime(&(item->starttime)));
+		printf("\t%s", ctime(&(item->endtime)));
+		printf("\tStatus:\t%d\n",item->status);*/
+
+		printf("%-6d\t", item->pid);
+		printf("%-4d\t", item->status);
+		PRINT_TIME_T_AS_HMS(item->starttime); printf("\t");
+		PRINT_TIME_T_AS_HMS(item->endtime);	printf("\t");
+		printf("%-s\n", item->cmd);
+		
 		item = item->next;
 	}
 	
