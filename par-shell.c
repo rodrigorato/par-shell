@@ -40,6 +40,7 @@ int main(int argc, char* argv[]){
 	 * it writes into the stderr stream. 
 	 * Repeats until user input is the exit command.
 	 **/
+
 	readLineArguments(inputVector, PATHNAME_MAX_ARGS+2);
 	while(!inputVector[0] || strcmp(inputVector[0], "exit")){
 		forkId = fork();

@@ -46,6 +46,7 @@ int insert_new_process(list_t *list, int pid, time_t starttime, char* cmd)
 		strcpy(item->cmd, cmd);
 	}
 	else{
+		/* We have to allocate this like so if we want to free it later. */
 		item->cmd = (char*) malloc(sizeof(char)*7);
 		strcpy(item->cmd, "(null)");
 	}
@@ -81,15 +82,11 @@ void lst_print(list_t *list)
 	lst_iitem_t *item;
 
 	printf("\nPROCESS LIST:\n"
-		   "%-6s\t%-4s\t%-10s\t%-10s\t%-s\n", "PID", "STATUS", "START TIME", "END TIME", "COMMAND");
+		   "%-6s\t%-4s\t%-10s\t%-10s\t%-s\n", 
+		   "PID", "STATUS", "START TIME", "END TIME", "COMMAND");
+	
 	item = list->first;
 	while (item != NULL){
-		//char* start_time = ctime(&(item->starttime));
-
-		/*printf("%s:%d\t%s", item->cmd, item->pid, ctime(&(item->starttime)));
-		printf("\t%s", ctime(&(item->endtime)));
-		printf("\tStatus:\t%d\n",item->status);*/
-
 		printf("%-6d\t", item->pid);
 		printf("%-4d\t", item->status);
 		PRINT_TIME_T_AS_HMS(item->starttime); printf("\t");

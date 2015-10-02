@@ -1,6 +1,11 @@
+#ifndef __LIST_H__
+#define __LIST_H__
+
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <time.h>
+#include "time_helper.h"
 
 /* We use this struct to save processes on the list */
 typedef struct lst_iitem{
@@ -43,3 +48,5 @@ void lst_print(list_t *list);
  * Return value is 0 if the process wasn't found
  * else, the return value is 1	*/
 int lst_remove(list_t *list, int pid);
+
+#endif /* __LIST_H__ */
