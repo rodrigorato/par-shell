@@ -5,8 +5,8 @@
 par-shell: par-shell.o list.o commandlinereader.o
 	gcc -o par-shell par-shell.o commandlinereader.o list.o
 
-par-shell.o: par-shell.c
-	gcc -Wall -g -c par-shell.c && make fibonacci
+par-shell.o: par-shell.c fibonacci
+	gcc -Wall -g -c par-shell.c
 
 list.o: list.c list.h
 	gcc -Wall -g -c list.c 
