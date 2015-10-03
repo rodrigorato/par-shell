@@ -10,7 +10,7 @@
 #define PATHNAME_MAX_ARGS 5
 
 int main(int argc, char* argv[]){
-	/* Aux variables used in all the program */
+	/* Aux variables used along the program */
 	int i = 0, pid = 0, status = 0;
 
 	/* Saves fork()'s return value */
@@ -52,10 +52,11 @@ int main(int argc, char* argv[]){
 		else if (forkId > 0){
 			/**
 			 * Runs the parent process' code:
-			 * 	- Saves info about the child process in a process list;
-			 * 	- Frees the allocated memory needed to store the user input.
-			 * [!] If there isn't enough memory to keep track of the child process,
-			 * 	   it will still be running.
+			 * Saves the child process info in a list and frees
+			 * the allocated memory used to save the user input.
+			 * 
+			 * WARNING: If there isn't enough memory to keep track of the child process,
+			 *			meaning we won't be able to save it on our list, it still executes.
 			 **/
 			if(!insert_new_process(processList, forkId, GET_CURRENT_TIME(), inputVector[0])) 
 				fprintf(stderr, "Child with PID:%d was lost because "
@@ -66,8 +67,10 @@ int main(int argc, char* argv[]){
 		else{
 			/**
 			 * Runs the child process' code:
-			 * 	- Tries to execute the program the user specified with respective arguments
-			 * [!] If the program wasn't found the process exits with EXIT_FAILURE
+			 * Tries to execute the program the user specified with respective arguments
+			 * 
+			 * WARNING: If the program wasn't found,
+			 *		    the process exits with EXIT_FAILURE....
 			 **/
 			execv(inputVector[0], inputVector);
 			fprintf(stderr, "%s: program not found\n", inputVector[0]);
