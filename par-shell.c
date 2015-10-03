@@ -40,7 +40,6 @@ int main(int argc, char* argv[]){
 	 * it writes into the stderr stream. 
 	 * Repeats until user input is the exit command.
 	 **/
-
 	readLineArguments(inputVector, PATHNAME_MAX_ARGS+2);
 	while(!inputVector[0] || strcmp(inputVector[0], "exit")){
 		forkId = fork();
@@ -70,19 +69,17 @@ int main(int argc, char* argv[]){
 			 * Tries to execute the program the user specified with respective arguments
 			 * 
 			 * WARNING: If the program wasn't found,
-			 *		    the process exits with EXIT_FAILURE....
+			 *		    the process exits with EXIT_FAILURE.
 			 **/
 			execv(inputVector[0], inputVector);
 			fprintf(stderr, "%s: program not found\n", inputVector[0]);
 			exit(EXIT_FAILURE);
 		}
-
 		readLineArguments(inputVector, PATHNAME_MAX_ARGS+2);
 	}
 
 	/* Frees the last user input - the exit command */
 	free(inputVector[0]);
-
 
 	/**
 	 * Waits for all the kids to complete and gets all their statuses, 
