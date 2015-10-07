@@ -87,7 +87,7 @@ int main(int argc, char* argv[]){
 	 **/
 	for(i = lst_sizeof(processList); i>0; i--){
 		pid = wait(&status);
-		update_terminated_process(processList, pid, GET_CURRENT_TIME(), status);
+		update_terminated_process(processList, pid, GET_CURRENT_TIME(), WEXITSTATUS(status));
 	}
 
 	/* Prints info about every chil process to the user */
