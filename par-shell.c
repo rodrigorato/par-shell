@@ -42,6 +42,7 @@ int main(int argc, char* argv[]){
 	 **/
 	readLineArguments(inputVector, PATHNAME_MAX_ARGS+2);
 	while(!inputVector[0] || strcmp(inputVector[0], "exit")){
+		// If the user presses enter we just stand-by to read his input again
 		if(inputVector[0] != NULL){
 			forkId = fork();
 
