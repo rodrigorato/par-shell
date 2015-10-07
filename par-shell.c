@@ -42,38 +42,40 @@ int main(int argc, char* argv[]){
 	 **/
 	readLineArguments(inputVector, PATHNAME_MAX_ARGS+2);
 	while(!inputVector[0] || strcmp(inputVector[0], "exit")){
-		forkId = fork();
+		if(inputVector[0] != NULL){
+			forkId = fork();
 
-		if(forkId < 0){
-			/* Couldn't fork - maybe not enough memory? */
-			fprintf(stderr, "Couldn't fork\n");
-		}
-		else if (forkId > 0){
-			/**
-			 * Runs the parent process' code:
-			 * Saves the child process info in a list and frees
-			 * the allocated memory used to save the user input.
-			 * 
-			 * WARNING: If there isn't enough memory to keep track of the child process,
-			 *			meaning we won't be able to save it on our list, it still executes.
-			 **/
-			if(!insert_new_process(processList, forkId, GET_CURRENT_TIME(), inputVector[0])) 
-				fprintf(stderr, "Child with PID:%d was lost because "
-								"you didn't have enough memory to save it, "
-								"it's still running.\n", forkId);
-			free(inputVector[0]);
-		}
-		else{
-			/**
-			 * Runs the child process' code:
-			 * Tries to execute the program the user specified with respective arguments
-			 * 
-			 * WARNING: If the program wasn't found,
-			 *		    the process exits with EXIT_FAILURE.
-			 **/
-			execv(inputVector[0], inputVector);
-			fprintf(stderr, "%s: program not found\n", inputVector[0]);
-			exit(EXIT_FAILURE);
+			if(forkId < 0){
+				/* Couldn't fork - maybe not enough memory? */
+				fprintf(stderr, "Couldn't fork\n");
+			}
+			else if (forkId > 0){
+				/**
+				 * Runs the parent process' code:
+				 * Saves the child process info in a list and frees
+				 * the allocated memory used to save the user input.
+				 * 
+				 * WARNING: If there isn't enough memory to keep track of the child process,
+				 *			meaning we won't be able to save it on our list, it still executes.
+				 **/
+				if(!insert_new_process(processList, forkId, GET_CURRENT_TIME(), inputVector[0])) 
+					fprintf(stderr, "Child with PID:%d was lost because "
+									"you didn't have enough memory to save it, "
+									"it's still running.\n", forkId);
+				free(inputVector[0]);
+			}
+			else{
+				/**
+				 * Runs the child process' code:
+				 * Tries to execute the program the user specified with respective arguments
+				 * 
+				 * WARNING: If the program wasn't found,
+				 *		    the process exits with EXIT_FAILURE.
+				 **/
+				execv(inputVector[0], inputVector);
+				fprintf(stderr, "%s: program not found\n", inputVector[0]);
+				exit(EXIT_FAILURE);
+			}
 		}
 		readLineArguments(inputVector, PATHNAME_MAX_ARGS+2);
 	}
