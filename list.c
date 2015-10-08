@@ -88,7 +88,12 @@ void lst_print(list_t *list)
 	item = list->first;
 	while (item != NULL){
 		printf("%-6d\t", item->pid);
-		printf("%-4d\t", item->status);
+
+		if(WIFEXITED(item->status))
+			printf("%-4d\t", WEXITSTATUS(item->status));
+		else
+			printf("%s\t", "NoExit");
+
 		PRINT_TIME_T_AS_HMS(item->starttime); printf("\t");
 		PRINT_TIME_T_AS_HMS(item->endtime);	printf("\t");
 		printf("%-s\n", item->cmd);
