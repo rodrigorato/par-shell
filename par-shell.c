@@ -21,7 +21,7 @@ int main(int argc, char* argv[]){
 	/** 
 	 * Declares the vector we use to store inputs and sets all positions to NULL 
 	 * 0th index is the program's name, followed by it's arguments (max 5)
-	 * The index after the last argument is set to NULL.
+	 * The index after the last argument is set to NULL.  
 	 **/
 	char* inputVector[INPUTVECTOR_SIZE] = {};
 
