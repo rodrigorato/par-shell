@@ -11,12 +11,14 @@
 #define PATHNAME_MAX_ARGS 5 /* Program can be ran with 5 arguments */
 #define INPUTVECTOR_SIZE PATHNAME_MAX_ARGS+2 /* vector[0] = program name; vector[-1] = NULL */
 
+
 int main(int argc, char* argv[]){
 	/* Aux variables used along the program */
 	int i = 0, pid = 0, status = 0;
 
 	/* Saves fork()'s return value */
 	int forkId;
+
 
 	/** 
 	 * Declares the vector we use to store inputs and sets all positions to NULL 

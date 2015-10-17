@@ -12,6 +12,7 @@ list_t* lst_new(){
    	if(list){
    		list->first = NULL;
    		list->lst_size = 0;
+   		list->lst_active = 0;
    	}
    	return list;
 }
@@ -53,6 +54,7 @@ int insert_new_process(list_t *list, int pid, time_t starttime, char* cmd)
 
 	item->next = list->first;
 	(list->lst_size)++;
+	(list->lst_active)++;
 	list->first = item;
 	return 1;
 }
@@ -65,6 +67,7 @@ void update_terminated_process(list_t *list, int pid, time_t endtime,int status)
 		if((temp->pid) == pid){
 			temp->endtime = endtime;
 			temp->status = status;
+			(list->lst_active)--;
 			break;
 		}
 	}
@@ -74,6 +77,10 @@ void update_terminated_process(list_t *list, int pid, time_t endtime,int status)
 
 int lst_sizeof(list_t *list){
 	return list->lst_size;
+}
+
+int lst_numactive(list_t *list){
+	return list->lst_active;
 }
 
 

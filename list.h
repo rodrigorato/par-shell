@@ -21,6 +21,7 @@ typedef struct lst_iitem{
 typedef struct{
    lst_iitem_t * first;
    int lst_size;
+   int lst_active;
 } list_t;
 
 
@@ -40,6 +41,9 @@ void update_terminated_process(list_t *list, int pid, time_t endtime, int status
 
 /* Returns the number of processes stored on the list, running or not. */
 int lst_sizeof(list_t *list);
+
+/* Returns the number of active processes stored on the list. */ 
+int lst_numactive(list_t *list);
 
 /* Prints the list into the stdout stream */
 void lst_print(list_t *list);
