@@ -13,7 +13,7 @@
 
 void *gottaWatchEmAll(void *voidList){
 	list_t* processList = (list_t*) voidList;
-	int pid, status;
+	int pid=0, status=0;
 	while(1){
 		if(lst_numactive(processList) == 0){
 			if(lst_isfinal(processList))
