@@ -3,6 +3,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <wait.h>
+#include <pthread.h>
 #include "commandlinereader.h"
 #include "list.h"
 #include "time_helper.h"
@@ -75,7 +76,7 @@ int main(int argc, char* argv[]){
 				 *		    the process exits with EXIT_FAILURE.
 				 **/
 				execv(inputVector[0], inputVector);
-				fprintf(stderr, "%s: program not found\n", inputVector[0]);
+				fprintf(stderr, "%s: couldn't execv\n", inputVector[0]);
 				exit(EXIT_FAILURE);
 			}
 		}
