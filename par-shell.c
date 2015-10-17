@@ -11,7 +11,8 @@
 #define PATHNAME_MAX_ARGS 5 /* Program can be ran with 5 arguments */
 #define INPUTVECTOR_SIZE PATHNAME_MAX_ARGS+2 /* vector[0] = program name; vector[-1] = NULL */
 
-void *gottaWatchEmAll(list_t *processList){
+void *gottaWatchEmAll(void *voidList){
+	list_t* processList = (list_t*) voidList;
 	int pid, status;
 	while(1){
 		if(lst_numactive(processList) == 0){
@@ -50,7 +51,7 @@ int main(int argc, char* argv[]){
 		exit(EXIT_FAILURE);
 	}
 
-	if(!pthread_create(&watcherThread, 0, gottaWatchEmAll, (void *)processList)){
+	if(pthread_create(&watcherThread, 0, gottaWatchEmAll,(void *)processList)){
 		fprintf(stderr, "Couldn't create a watcher thread\n");
 		exit(EXIT_FAILURE);
 	}
