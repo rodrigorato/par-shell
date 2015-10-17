@@ -1,0 +1,4 @@
+fibonacci 10000
+fibonacci 11000
+fibonacci 20000
+exit
