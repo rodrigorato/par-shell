@@ -8,6 +8,7 @@
 #include "time_helper.h"
 
 #define PATHNAME_MAX_ARGS 5
+#define INPUTVECTOR_SIZE PATHNAME_MAX_ARGS+2
 
 int main(int argc, char* argv[]){
 	/* Aux variables used along the program */
@@ -21,7 +22,7 @@ int main(int argc, char* argv[]){
 	 * 0th index is the program's name, followed by it's arguments (max 5)
 	 * The index after the last argument is set to NULL.
 	 **/
-	char* inputVector[PATHNAME_MAX_ARGS+2] = {};
+	char* inputVector[INPUTVECTOR_SIZE] = {};
 
 	/** 
 	 * Initializes a list where we store the processes ran by the shell
@@ -40,7 +41,7 @@ int main(int argc, char* argv[]){
 	 * it writes into the stderr stream. 
 	 * Repeats until user input is the exit command.
 	 **/
-	readLineArguments(inputVector, PATHNAME_MAX_ARGS+2);
+	readLineArguments(inputVector, INPUTVECTOR_SIZE);
 	while(!inputVector[0] || strcmp(inputVector[0], "exit")){
 		/* If the user presses enter we just stand-by to read his input again */
 		if(inputVector[0] != NULL){
@@ -79,7 +80,7 @@ int main(int argc, char* argv[]){
 			}
 		}
 
-		readLineArguments(inputVector, PATHNAME_MAX_ARGS+2);
+		readLineArguments(inputVector, INPUTVECTOR_SIZE);
 	}
 
 	/* Frees the last user input - the exit command */
