@@ -3,7 +3,7 @@
 # make clean : elimina ficheiros objecto e o executavel da par-shell
 
 par-shell: par-shell.o list.o commandlinereader.o fibonacci
-	gcc -o par-shell par-shell.o commandlinereader.o list.o
+	gcc -pthread -o par-shell par-shell.o commandlinereader.o list.o
 
 par-shell.o: par-shell.c
 	gcc -Wall -g -c par-shell.c
