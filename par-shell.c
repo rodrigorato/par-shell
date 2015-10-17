@@ -18,6 +18,7 @@ int main(int argc, char* argv[]){
 
 	/* Saves fork()'s return value */
 	int forkId;
+	pthread_t watcher_thread;
 
 
 	/** 
