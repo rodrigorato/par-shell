@@ -1,3 +1,7 @@
+/* fork(), processo pai perde processador, filho ja deu return, 
+	watcher thread pode apanhar ja o filho zombie sem estar na lista
+	mutex asseguir ao fork e antes do command line reader, 
+	e mutex antes e depois do update_terminated process */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
