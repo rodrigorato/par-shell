@@ -22,6 +22,7 @@ typedef struct{
    lst_iitem_t * first;
    int lst_size;
    int lst_active;
+   int final; /* if list is final we wont let you add new elements */
 } list_t;
 
 
@@ -44,6 +45,12 @@ int lst_sizeof(list_t *list);
 
 /* Returns the number of active processes stored on the list. */ 
 int lst_numactive(list_t *list);
+
+/* Finalizes list */
+void lst_finalize(list_t *list);
+
+/* Returns final status, 1 if final, 0 otherwise */
+int lst_isfinal(list_t *list);
 
 /* Prints the list into the stdout stream */
 void lst_print(list_t *list);

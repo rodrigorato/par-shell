@@ -11,15 +11,26 @@
 #define PATHNAME_MAX_ARGS 5 /* Program can be ran with 5 arguments */
 #define INPUTVECTOR_SIZE PATHNAME_MAX_ARGS+2 /* vector[0] = program name; vector[-1] = NULL */
 
+void *gottaWatchEmAll(list_t *processList){
+	int pid, status;
+	while(1){
+		if(lst_numactive(processList) == 0){
+			if(lst_isfinal(processList))
+				return NULL;
+			sleep(1);
+		}
+		else{
+			pid = wait(&status);
+			update_terminated_process(processList, pid, GET_CURRENT_TIME(), status);
+		}
+	}
+}
+
 
 int main(int argc, char* argv[]){
-	/* Aux variables used along the program */
-	int i = 0, pid = 0, status = 0;
-
 	/* Saves fork()'s return value */
 	int forkId;
-	pthread_t watcher_thread;
-
+	pthread_t watcherThread;
 
 	/** 
 	 * Declares the vector we use to store inputs and sets all positions to NULL 
@@ -36,6 +47,11 @@ int main(int argc, char* argv[]){
 
 	if(!processList){
 		fprintf(stderr, "Couldn't allocate enough memory to save a process list\n");
+		exit(EXIT_FAILURE);
+	}
+
+	if(!pthread_create(&watcherThread, 0, gottaWatchEmAll, (void *)processList)){
+		fprintf(stderr, "Couldn't create a watcher thread\n");
 		exit(EXIT_FAILURE);
 	}
 
@@ -88,16 +104,9 @@ int main(int argc, char* argv[]){
 	}
 
 	/* Frees the last user input - the exit command */
+	lst_finalize(processList);
 	free(inputVector[0]);
-
-	/**
-	 * Waits for all the kids to complete and gets all their statuses, 
-	 * including zombies, and updates their data in the process list.
-	 **/
-	for(i = lst_sizeof(processList); i>0; i--){
-		pid = wait(&status);
-		update_terminated_process(processList, pid, GET_CURRENT_TIME(), status);
-	}
+	pthread_join(watcherThread, NULL);
 
 	/* Prints info about every chil process to the user */
 	lst_print(processList);

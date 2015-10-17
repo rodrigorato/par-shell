@@ -13,6 +13,7 @@ list_t* lst_new(){
    		list->first = NULL;
    		list->lst_size = 0;
    		list->lst_active = 0;
+   		list->final = 0;
    	}
    	return list;
 }
@@ -31,8 +32,9 @@ void lst_destroy(list_t *list){
 }
 
 
-int insert_new_process(list_t *list, int pid, time_t starttime, char* cmd)
-{
+int insert_new_process(list_t *list, int pid, time_t starttime, char* cmd){
+	if(lst_isfinal(list))
+		return 0;
 	lst_iitem_t *item;
 	item = (lst_iitem_t *) malloc (sizeof(lst_iitem_t));
 	if (!item)
@@ -60,8 +62,7 @@ int insert_new_process(list_t *list, int pid, time_t starttime, char* cmd)
 }
 
 
-void update_terminated_process(list_t *list, int pid, time_t endtime,int status)
-{
+void update_terminated_process(list_t *list, int pid, time_t endtime,int status){
 	lst_iitem_t *temp = list->first;
 	for(; temp!=NULL; temp=temp->next){
 		if((temp->pid) == pid){
@@ -83,9 +84,15 @@ int lst_numactive(list_t *list){
 	return list->lst_active;
 }
 
+void lst_finalize(list_t *list){
+	list->final = 1;
+}
 
-void lst_print(list_t *list)
-{
+int lst_isfinal(list_t *list){
+	return list->final;
+}
+
+void lst_print(list_t *list){
 	lst_iitem_t *item;
 
 	printf("\nPROCESS LIST:\n"
