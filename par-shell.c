@@ -22,7 +22,7 @@ void *gottaWatchEmAll(void *voidList){
 	while(1){
 		if(lst_numactive(processList) == 0){
 			if(lst_isfinal(processList))
-				return NULL;
+				return NULL; // pthread_exit() ou isto?? pls halp
 			sleep(1);
 		}
 		else{
