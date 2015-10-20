@@ -68,6 +68,7 @@ int main(int argc, char* argv[]){
 	while(!inputVector[0] || strcmp(inputVector[0], "exit")){
 		/* If the user presses enter we just stand-by to read his input again */
 		if(inputVector[0] != NULL){
+			/*Locking list because we need to ensure that child is inserted in list*/
 			lst_lock(processList);
 			forkId = fork();
 
@@ -85,6 +86,8 @@ int main(int argc, char* argv[]){
 				 * 
 				 * WARNING: If there isn't enough memory to keep track of the child process,
 				 *			meaning we won't be able to save it on our list, it still executes.
+				 *
+				 *			Shouldnt we kill it?
 				 **/
 				if(!insert_new_process(processList, forkId, GET_CURRENT_TIME(), inputVector[0])) 
 					fprintf(stderr, "Child with PID:%d was lost because "
@@ -105,7 +108,8 @@ int main(int argc, char* argv[]){
 				exit(EXIT_FAILURE);
 			}
 		}
-
+		/*We unlock because we ensured that the monitor thread couldnt write
+		  on list, even if the kid was already zombie*/
 		lst_unlock(processList);
 		readLineArguments(inputVector, INPUTVECTOR_SIZE);
 	}

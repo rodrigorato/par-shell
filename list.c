@@ -20,7 +20,7 @@ list_t* lst_new(){
    			/* 	if mutex wasnt allocated or couldnt be initialized
    				we destroy everything made */
    			free(list->lst_mutex); free(list); list = NULL;
-			}
+		}
    	}
    	return list;
 }
