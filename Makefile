@@ -9,7 +9,7 @@ par-shell.o: par-shell.c list.o
 	gcc -Wall -g -c par-shell.c
 
 list.o: list.c list.h
-	gcc -pthread -Wall -g -c list.c 
+	gcc -Wall -g -c list.c 
 
 commandlinereader.o: commandlinereader.c commandlinereader.h
 	gcc -Wall -g -c commandlinereader.c
