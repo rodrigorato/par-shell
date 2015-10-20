@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
+#include <pthread.h>
 #include "time_helper.h"
 
 /* We use this struct to save processes on the list */
@@ -22,6 +23,7 @@ typedef struct{
    lst_iitem_t * first;
    int lst_size;
    int lst_active;
+   pthread_mutex_t * lst_mutex;
    int final; /* if list is final we wont let you add new elements */
 } list_t;
 
@@ -45,6 +47,12 @@ int lst_sizeof(list_t *list);
 
 /* Returns the number of active processes stored on the list. */ 
 int lst_numactive(list_t *list);
+
+/* Locks mutex, consider as the mutex itself, just put lst_ before */
+int lst_lock(list_t *list);
+
+/* Unlocks mutex, consider as the mutex itself, just put lst_ before */
+int lst_unlock(list_t *list);
 
 /* Finalizes list */
 void lst_finalize(list_t *list);

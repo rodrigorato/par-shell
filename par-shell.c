@@ -1,8 +1,3 @@
-/* 	NOME DA THREAD WATCHER - NADA DE POKEMON REFERENCES PLS
-	fork(), processo pai perde processador, filho ja deu return, 
-	watcher thread pode apanhar ja o filho zombie sem estar na lista
-	mutex asseguir ao fork e antes do command line reader, 
-	e mutex antes e depois do update_terminated process */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -27,7 +22,9 @@ void *gottaWatchEmAll(void *voidList){
 		}
 		else{
 			pid = wait(&status);
+			lst_lock(processList);
 			update_terminated_process(processList, pid, GET_CURRENT_TIME(), status);
+			lst_unlock(processList);
 		}
 	}
 }
@@ -36,7 +33,7 @@ void *gottaWatchEmAll(void *voidList){
 int main(int argc, char* argv[]){
 	/* Saves fork()'s return value */
 	int forkId;
-	pthread_t watcherThread;
+	pthread_t watcherThread;	
 
 	/** 
 	 * Declares the vector we use to store inputs and sets all positions to NULL 
@@ -71,7 +68,10 @@ int main(int argc, char* argv[]){
 	while(!inputVector[0] || strcmp(inputVector[0], "exit")){
 		/* If the user presses enter we just stand-by to read his input again */
 		if(inputVector[0] != NULL){
+			lst_lock(processList);
 			forkId = fork();
+
+
 
 			if(forkId < 0){
 				/* Couldn't fork - maybe not enough memory? */
@@ -106,6 +106,7 @@ int main(int argc, char* argv[]){
 			}
 		}
 
+		lst_unlock(processList);
 		readLineArguments(inputVector, INPUTVECTOR_SIZE);
 	}
 
@@ -114,7 +115,7 @@ int main(int argc, char* argv[]){
 	free(inputVector[0]);
 	pthread_join(watcherThread, NULL);
 
-	/* Prints info about every chil process to the user */
+	/* Prints info about every child process to the user */
 	lst_print(processList);
 
 	/* Deallocates all memory for the process list. */

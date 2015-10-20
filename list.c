@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
+#include <pthread.h>
 #include "list.h"
 #include "time_helper.h"
 		
@@ -14,6 +15,12 @@ list_t* lst_new(){
    		list->lst_size = 0;
    		list->lst_active = 0;
    		list->final = 0;
+   		list->lst_mutex = (pthread_mutex_t*) malloc(sizeof(pthread_mutex_t));
+   		if( (!(list->lst_mutex)) || pthread_mutex_init(list->lst_mutex,NULL)){
+   			/* 	if mutex wasnt allocated or couldnt be initialized
+   				we destroy everything made */
+   			free(list->lst_mutex); free(list); list = NULL;
+			}
    	}
    	return list;
 }
@@ -28,6 +35,11 @@ void lst_destroy(list_t *list){
 		free(item);
 		item = nextitem;
   	}
+  	/*needs to be asked, how can i assure that mutex is unlocked to be safely destroyed?*/
+  	while(pthread_mutex_trylock(list->lst_mutex));
+  	pthread_mutex_unlock(list->lst_mutex);
+  	pthread_mutex_destroy(list->lst_mutex);
+  	free(list->lst_mutex);
 	free(list);
 }
 
@@ -84,6 +96,14 @@ int lst_numactive(list_t *list){
 	return list->lst_active;
 }
 
+int lst_lock(list_t *list){
+	return pthread_mutex_lock(list->lst_mutex);
+}
+
+int lst_unlock(list_t *list){
+	return pthread_mutex_unlock(list->lst_mutex);
+}
+
 void lst_finalize(list_t *list){
 	list->final = 1;
 }
@@ -96,8 +116,8 @@ void lst_print(list_t *list){
 	lst_iitem_t *item;
 
 	printf("\nPROCESS LIST:\n"
-		   "%-6s\t%-4s\t%-10s\t%-10s\t%-s\n", 
-		   "PID", "STATUS", "START TIME", "END TIME", "COMMAND");
+		   "%-6s\t%-4s\t%-10s\t%-10s\t%-9s\t%-s\n", 
+		   "PID", "STATUS", "START TIME", "END TIME", "DURATION", "COMMAND");
 	
 	item = list->first;
 	while (item != NULL){
@@ -110,6 +130,7 @@ void lst_print(list_t *list){
 
 		PRINT_TIME_T_AS_HMS(item->starttime); printf("\t");
 		PRINT_TIME_T_AS_HMS(item->endtime);	printf("\t");
+		printf("%-9g\t", difftime(item->endtime,item->starttime));
 		printf("%-s\n", item->cmd);
 		
 		item = item->next;
