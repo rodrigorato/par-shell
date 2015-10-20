@@ -21,5 +21,11 @@
  */
 #define GET_CURRENT_TIME() time(NULL)
 
+/**
+ * Gets the difference between time1-time0, returns double.
+ */
+#define GET_DURATION_TIME(time1,time0) difftime(time1,time0)
+
+
 
 #endif /* __TIME_HELPER_H__ */ 

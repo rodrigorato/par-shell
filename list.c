@@ -130,7 +130,7 @@ void lst_print(list_t *list){
 
 		PRINT_TIME_T_AS_HMS(item->starttime); printf("\t");
 		PRINT_TIME_T_AS_HMS(item->endtime);	printf("\t");
-		printf("%-9g\t", difftime(item->endtime,item->starttime));
+		printf("%-9g\t", GET_DURATION_TIME(item->endtime,item->starttime));
 		printf("%-s\n", item->cmd);
 		
 		item = item->next;
