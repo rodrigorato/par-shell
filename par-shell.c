@@ -12,6 +12,17 @@
 #define INPUTVECTOR_SIZE PATHNAME_MAX_ARGS+2 /* vector[0] = program name; vector[-1] = NULL */
 
 void *gottaWatchEmAll(void *voidList){
+	/**
+	 *	Watcher thread:
+	 *	Runs in parallel with the main thread,
+	 *  waiting out on all child processes
+	 *	and keeping track of their end times,
+	 * 	while it updates the list. 
+	 *
+	 *	We use the list's (un)lock functions 
+	 *  (inner list mutex implementations)
+	 *  to read and write to it.
+	 **/
 	list_t* processList = (list_t*) voidList;
 	int pid=0, status=0;
 	while(1){
@@ -19,7 +30,7 @@ void *gottaWatchEmAll(void *voidList){
 		if(lst_numactive(processList) == 0){
 			if(lst_isfinal(processList)){
 				lst_unlock(processList);
-				return NULL; // pthread_exit() ou isto?? pls halp
+				pthread_exit(NULL);
 			}
 			lst_unlock(processList);
 			sleep(1);
@@ -36,9 +47,8 @@ void *gottaWatchEmAll(void *voidList){
 
 
 int main(int argc, char* argv[]){
-	/* Saves fork()'s return value */
-	int forkId;
-	pthread_t watcherThread;	
+	int forkId; // Saves fork()'s return value 
+	pthread_t watcherThread;
 
 	/** 
 	 * Declares the vector we use to store inputs and sets all positions to NULL 
@@ -73,11 +83,9 @@ int main(int argc, char* argv[]){
 	while(!inputVector[0] || strcmp(inputVector[0], "exit")){
 		/* If the user presses enter we just stand-by to read his input again */
 		if(inputVector[0] != NULL){
-			/*Locking list because we need to ensure that child is inserted in list*/
+			/* Locking list because we need to ensure that child is inserted in list */
 			lst_lock(processList);
 			forkId = fork();
-
-
 
 			if(forkId < 0){
 				/* Couldn't fork - maybe not enough memory? */
@@ -111,8 +119,8 @@ int main(int argc, char* argv[]){
 				exit(EXIT_FAILURE);
 			}
 		}
-		/*We unlock because we ensured that the monitor thread couldnt write
-		  on list, even if the kid was already zombie*/
+		/* We unlock because we ensured that the monitor thread couldn't write
+		   on list, even if the child was already a zombie */
 		lst_unlock(processList);
 		readLineArguments(inputVector, INPUTVECTOR_SIZE);
 	}

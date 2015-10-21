@@ -48,10 +48,10 @@ int lst_sizeof(list_t *list);
 /* Returns the number of active processes stored on the list. */ 
 int lst_numactive(list_t *list);
 
-/* Locks mutex, consider as the mutex itself, just put lst_ before */
+/* Locks mutex, consider it the mutex itself */
 int lst_lock(list_t *list);
 
-/* Unlocks mutex, consider as the mutex itself, just put lst_ before */
+/* Unlocks mutex, consider it the mutex itself */
 int lst_unlock(list_t *list);
 
 /* Finalizes list */

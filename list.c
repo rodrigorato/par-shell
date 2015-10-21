@@ -16,10 +16,8 @@ list_t* lst_new(){
    		list->lst_active = 0;
    		list->final = 0;
    		list->lst_mutex = (pthread_mutex_t*) malloc(sizeof(pthread_mutex_t));
-   		if( (!(list->lst_mutex)) && !pthread_mutex_init(list->lst_mutex,NULL)){
-   			/* 	if mutex wasnt allocated or couldnt be initialized
-   				we destroy everything made */
-   			free(list->lst_mutex); free(list); list = NULL;
+   		if((!(list->lst_mutex)) || pthread_mutex_init(list->lst_mutex,NULL)){ // if mutex allocation or initialization failed
+			free(list->lst_mutex); free(list); list = NULL; // we undo all work previously done
 		}
    	}
    	return list;
@@ -35,7 +33,8 @@ void lst_destroy(list_t *list){
 		free(item);
 		item = nextitem;
   	}
-  	/*needs to be asked, how can i assure that mutex is unlocked to be safely destroyed?*/
+
+  	/* As soon as the mutex is unlocked the list is destroyed */
   	while(pthread_mutex_trylock(list->lst_mutex));
   	pthread_mutex_unlock(list->lst_mutex);
   	pthread_mutex_destroy(list->lst_mutex);
@@ -61,7 +60,7 @@ int insert_new_process(list_t *list, int pid, time_t starttime, char* cmd){
 		strcpy(item->cmd, cmd);
 	}
 	else{
-		/* We have to allocate this like so if we want to free it later. */
+		/* We have to allocate it like so if we want to free it later. */
 		item->cmd = (char*) malloc(sizeof(char)*7);
 		strcpy(item->cmd, "(null)");
 	}
@@ -130,6 +129,7 @@ void lst_print(list_t *list){
 
 		PRINT_TIME_T_AS_HMS(item->starttime); printf("\t");
 		PRINT_TIME_T_AS_HMS(item->endtime);	printf("\t");
+
 		printf("%-9g\t", GET_DURATION_TIME(item->endtime,item->starttime));
 		printf("%-s\n", item->cmd);
 		
