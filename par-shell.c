@@ -91,8 +91,6 @@ int main(int argc, char* argv[]){
 				 * 
 				 * WARNING: If there isn't enough memory to keep track of the child process,
 				 *			meaning we won't be able to save it on our list, it still executes.
-				 *
-				 *			Shouldnt we kill it?
 				 **/
 				if(!insert_new_process(processList, forkId, GET_CURRENT_TIME(), inputVector[0])) 
 					fprintf(stderr, "Child with PID:%d was lost because "
