@@ -15,12 +15,17 @@ void *gottaWatchEmAll(void *voidList){
 	list_t* processList = (list_t*) voidList;
 	int pid=0, status=0;
 	while(1){
+		lst_lock(processList);
 		if(lst_numactive(processList) == 0){
-			if(lst_isfinal(processList))
+			if(lst_isfinal(processList)){
+				lst_unlock(processList);
 				return NULL; // pthread_exit() ou isto?? pls halp
+			}
+			lst_unlock(processList);
 			sleep(1);
 		}
 		else{
+			lst_unlock(processList);
 			pid = wait(&status);
 			lst_lock(processList);
 			update_terminated_process(processList, pid, GET_CURRENT_TIME(), status);

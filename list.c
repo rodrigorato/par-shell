@@ -16,7 +16,7 @@ list_t* lst_new(){
    		list->lst_active = 0;
    		list->final = 0;
    		list->lst_mutex = (pthread_mutex_t*) malloc(sizeof(pthread_mutex_t));
-   		if( (!(list->lst_mutex)) || pthread_mutex_init(list->lst_mutex,NULL)){
+   		if( (!(list->lst_mutex)) && !pthread_mutex_init(list->lst_mutex,NULL)){
    			/* 	if mutex wasnt allocated or couldnt be initialized
    				we destroy everything made */
    			free(list->lst_mutex); free(list); list = NULL;
