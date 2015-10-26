@@ -4,12 +4,16 @@
 #include <unistd.h>
 #include <wait.h>
 #include <pthread.h>
+#include <semaphore.h>
 #include "commandlinereader.h"
 #include "list.h"
 #include "time_helper.h"
 
 #define PATHNAME_MAX_ARGS 5 /* Program can be ran with 5 arguments */
 #define INPUTVECTOR_SIZE PATHNAME_MAX_ARGS+2 /* vector[0] = program name; vector[-1] = NULL */
+#define MAXPAR 4 /* Set it to the number of cores in your machine */
+
+sem_t g_runningProcesses;
 
 void *gottaWatchEmAll(void *voidList){
 	/**
@@ -25,31 +29,29 @@ void *gottaWatchEmAll(void *voidList){
 	 **/
 	list_t* processList = (list_t*) voidList;
 	int pid=0, status=0;
+
 	while(1){
 		lst_lock(processList);
-		if(lst_numactive(processList) == 0){
-			if(lst_isfinal(processList)){
-				lst_unlock(processList);
-				pthread_exit(NULL);
-			}
+		if((lst_numactive(processList) == 0) && lst_isfinal(processList)){
 			lst_unlock(processList);
-			sleep(1);
+			pthread_exit(NULL);
 		}
-		else{
-			lst_unlock(processList);
-			pid = wait(&status);
-			lst_lock(processList);
-			update_terminated_process(processList, pid, GET_CURRENT_TIME(), status);
-			lst_unlock(processList);
-		}
+		lst_unlock(processList);
+		if(sem_wait(&g_runningProcesses))
+			fprintf(stderr, "Semaphore waiting failure: can't wait on running processes.\n");
+		pid = wait(&status);
+		lst_lock(processList);
+		update_terminated_process(processList, pid, GET_CURRENT_TIME(), status);
+		lst_unlock(processList);
 	}
 }
 
 
 int main(int argc, char* argv[]){
 	int forkId; // Saves fork()'s return value 
+	int threadCreated = 0;
 	pthread_t watcherThread;
-
+	
 	/** 
 	 * Declares the vector we use to store inputs and sets all positions to NULL 
 	 * 0th index is the program's name, followed by it's arguments (max 5)
@@ -63,15 +65,20 @@ int main(int argc, char* argv[]){
 	 **/
 	list_t *processList = lst_new(); 
 
+	/**
+	 * Initializes a semaphore to keep track of the running processes.
+	 * It is declared globally.
+	 **/
+	if(sem_init(&g_runningProcesses, 0, 0)){
+		fprintf(stderr, "Couldn't initialize a semaphore to keep track of your processes!\n");
+		exit(EXIT_FAILURE);
+	}
+
 	if(!processList){
 		fprintf(stderr, "Couldn't allocate enough memory to save a process list\n");
 		exit(EXIT_FAILURE);
 	}
 
-	if(pthread_create(&watcherThread, 0, gottaWatchEmAll,(void *)processList)){
-		fprintf(stderr, "Couldn't create a watcher thread\n");
-		exit(EXIT_FAILURE);
-	}
 
 	/**
 	 * Reads user input, and tries to start a process running
@@ -80,6 +87,15 @@ int main(int argc, char* argv[]){
 	 * Repeats until user input is the exit command.
 	 **/
 	readLineArguments(inputVector, INPUTVECTOR_SIZE);
+
+	if(strcmp(inputVector[0], "exit")){
+		if(pthread_create(&watcherThread, 0, gottaWatchEmAll,(void *)processList)){
+			fprintf(stderr, "Couldn't create a watcher thread\n");
+			exit(EXIT_FAILURE);
+		}
+		threadCreated = 1;
+	}
+
 	while(!inputVector[0] || strcmp(inputVector[0], "exit")){
 		/* If the user presses enter we just stand-by to read his input again */
 		if(inputVector[0] != NULL){
@@ -104,6 +120,9 @@ int main(int argc, char* argv[]){
 					fprintf(stderr, "Child with PID:%d was lost because "
 									"you didn't have enough memory to save it, "
 									"it's still running.\n", forkId);
+				if(sem_post(&g_runningProcesses))
+					fprintf(stderr, "Unable to post the semaphore. We won't exit the program,"
+									" but, unexpected behaviour might occur.\n");
 				free(inputVector[0]);
 			}
 			else{
@@ -125,10 +144,17 @@ int main(int argc, char* argv[]){
 		readLineArguments(inputVector, INPUTVECTOR_SIZE);
 	}
 
+
 	/* Frees the last user input - the exit command */
 	lst_finalize(processList);
 	free(inputVector[0]);
-	pthread_join(watcherThread, NULL);
+	
+	if(threadCreated)
+			pthread_join(watcherThread, NULL);
+
+	/* Destroys the semaphore. */
+	if(sem_destroy(&g_runningProcesses))
+		fprintf(stderr, "Couldn't destroy a semaphore.\n");
 
 	/* Prints info about every child process to the user */
 	lst_print(processList);
