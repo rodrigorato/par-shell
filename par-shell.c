@@ -14,6 +14,7 @@
 #define MAXPAR 4 /* Set it to the number of cores in your machine */
 
 sem_t g_runningProcesses;
+sem_t g_canRunProcesses;
 
 void *gottaWatchEmAll(void *voidList){
 	/**
@@ -31,15 +32,18 @@ void *gottaWatchEmAll(void *voidList){
 	int pid=0, status=0;
 
 	while(1){
+		if(sem_wait(&g_runningProcesses))
+			fprintf(stderr, "Semaphore waiting failure: can't wait on running processes.\n");
+
 		lst_lock(processList);
 		if((lst_numactive(processList) == 0) && lst_isfinal(processList)){
 			lst_unlock(processList);
 			pthread_exit(NULL);
 		}
 		lst_unlock(processList);
-		if(sem_wait(&g_runningProcesses))
-			fprintf(stderr, "Semaphore waiting failure: can't wait on running processes.\n");
+		
 		pid = wait(&status);
+		sem_post(&g_canRunProcesses);
 		lst_lock(processList);
 		update_terminated_process(processList, pid, GET_CURRENT_TIME(), status);
 		lst_unlock(processList);
@@ -74,6 +78,15 @@ int main(int argc, char* argv[]){
 		exit(EXIT_FAILURE);
 	}
 
+	/**
+	 * Initializes a semaphore to limit the number of running processes.
+	 * It is declared globally.
+	 **/
+	if(sem_init(&g_canRunProcesses, 0, MAXPAR)){
+	 	fprintf(stderr, "Couldn't initialize a semaphore to limit your processes!\n");
+	 	exit(EXIT_FAILURE);
+	}
+
 	if(!processList){
 		fprintf(stderr, "Couldn't allocate enough memory to save a process list\n");
 		exit(EXIT_FAILURE);
@@ -100,6 +113,7 @@ int main(int argc, char* argv[]){
 		/* If the user presses enter we just stand-by to read his input again */
 		if(inputVector[0] != NULL){
 			/* Locking list because we need to ensure that child is inserted in list */
+			sem_wait(&g_canRunProcesses);
 			lst_lock(processList);
 			forkId = fork();
 
@@ -144,16 +158,17 @@ int main(int argc, char* argv[]){
 		readLineArguments(inputVector, INPUTVECTOR_SIZE);
 	}
 
+	sem_post(&g_runningProcesses);
 
 	/* Frees the last user input - the exit command */
 	lst_finalize(processList);
 	free(inputVector[0]);
-	
+
 	if(threadCreated)
 			pthread_join(watcherThread, NULL);
 
-	/* Destroys the semaphore. */
-	if(sem_destroy(&g_runningProcesses))
+	/* Destroys the semaphores. */
+	if(sem_destroy(&g_runningProcesses) || sem_destroy(&g_canRunProcesses))
 		fprintf(stderr, "Couldn't destroy a semaphore.\n");
 
 	/* Prints info about every child process to the user */
