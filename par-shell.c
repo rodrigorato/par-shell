@@ -43,7 +43,10 @@ void *gottaWatchEmAll(void *voidList){
 		lst_unlock(processList);
 		
 		pid = wait(&status);
-		sem_post(&g_canRunProcesses);
+		if(sem_post(&g_canRunProcesses))
+			fprintf(stderr, "Unable to post the semaphore. We won't exit the program,"
+							" but, unexpected behaviour might occur.\n");
+
 		lst_lock(processList);
 		update_terminated_process(processList, pid, GET_CURRENT_TIME(), status);
 		lst_unlock(processList);
@@ -53,7 +56,6 @@ void *gottaWatchEmAll(void *voidList){
 
 int main(int argc, char* argv[]){
 	int forkId; // Saves fork()'s return value 
-	int threadCreated = 0;
 	pthread_t watcherThread;
 	
 	/** 
@@ -101,19 +103,18 @@ int main(int argc, char* argv[]){
 	 **/
 	readLineArguments(inputVector, INPUTVECTOR_SIZE);
 
-	if(strcmp(inputVector[0], "exit")){
-		if(pthread_create(&watcherThread, 0, gottaWatchEmAll,(void *)processList)){
-			fprintf(stderr, "Couldn't create a watcher thread\n");
-			exit(EXIT_FAILURE);
-		}
-		threadCreated = 1;
+	if(pthread_create(&watcherThread, 0, gottaWatchEmAll,(void *)processList)){
+		fprintf(stderr, "Couldn't create a watcher thread\n");
+		exit(EXIT_FAILURE);
 	}
 
 	while(!inputVector[0] || strcmp(inputVector[0], "exit")){
 		/* If the user presses enter we just stand-by to read his input again */
 		if(inputVector[0] != NULL){
 			/* Locking list because we need to ensure that child is inserted in list */
-			sem_wait(&g_canRunProcesses);
+			if(sem_wait(&g_canRunProcesses))
+				fprintf(stderr, "Unable to wait on a semaphore. Program won't exit but"
+								" unexpected behaviour might occur.\n");
 			lst_lock(processList);
 			forkId = fork();
 
@@ -158,14 +159,16 @@ int main(int argc, char* argv[]){
 		readLineArguments(inputVector, INPUTVECTOR_SIZE);
 	}
 
-	sem_post(&g_runningProcesses);
+	if(sem_post(&g_runningProcesses))
+		fprintf(stderr, "Unable to post the semaphore. We won't exit the program,"
+						" but, unexpected behaviour might occur.\n");
 
 	/* Frees the last user input - the exit command */
 	lst_finalize(processList);
 	free(inputVector[0]);
 
-	if(threadCreated)
-			pthread_join(watcherThread, NULL);
+
+	pthread_join(watcherThread, NULL);
 
 	/* Destroys the semaphores. */
 	if(sem_destroy(&g_runningProcesses) || sem_destroy(&g_canRunProcesses))
