@@ -181,13 +181,21 @@ int main(int argc, char* argv[]){
 		readLineArguments(inputVector, INPUTVECTOR_SIZE);
 	}
 
+	if(lst_lock(processList))
+		fprintf(stderr, "Problem with locking list mutex\n");
+
+	/* Commands do finalize list*/
+	lst_finalize(processList);
+
+	if(lst_unlock(processList))
+		fprintf(stderr, "Problem with unlocking list mutex\n");
+
 	/* We post one last time so the thread can get to pthread_exit*/
 	if(sem_post(&g_runningProcesses))
 		fprintf(stderr, "Unable to post the semaphore. We won't exit the program,"
 						" but, unexpected behaviour might occur.\n");
 
 	/* Frees the last user input - the exit command */
-	lst_finalize(processList);
 	free(inputVector[0]);
 
 
