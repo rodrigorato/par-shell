@@ -11,7 +11,7 @@
 
 #define PATHNAME_MAX_ARGS 5 /* Program can be ran with 5 arguments */
 #define INPUTVECTOR_SIZE PATHNAME_MAX_ARGS+2 /* vector[0] = program name; vector[-1] = NULL */
-#define MAXPAR 4 /* Set it to the number of cores in your machine */
+#define MAXPAR 2 /* Set it to the number of cores in your machine */
 
 sem_t g_runningProcesses;
 sem_t g_canRunProcesses;
@@ -35,21 +35,30 @@ void *gottaWatchEmAll(void *voidList){
 		if(sem_wait(&g_runningProcesses))
 			fprintf(stderr, "Semaphore waiting failure: can't wait on running processes.\n");
 
-		lst_lock(processList);
+		if(lst_lock(processList))
+			fprintf(stderr, "Problem with locking list mutex\n");
+
 		if((lst_numactive(processList) == 0) && lst_isfinal(processList)){
 			lst_unlock(processList);
 			pthread_exit(NULL);
 		}
-		lst_unlock(processList);
+
+		if(lst_unlock(processList))
+			fprintf(stderr, "Problem with unlocking list mutex\n");
 		
 		pid = wait(&status);
+
 		if(sem_post(&g_canRunProcesses))
 			fprintf(stderr, "Unable to post the semaphore. We won't exit the program,"
 							" but, unexpected behaviour might occur.\n");
 
-		lst_lock(processList);
+		if(lst_lock(processList))
+			fprintf(stderr, "Problem with locking list mutex\n");
+
 		update_terminated_process(processList, pid, GET_CURRENT_TIME(), status);
-		lst_unlock(processList);
+
+		if(lst_unlock(processList))
+			fprintf(stderr, "Problem with unlocking list mutex\n");
 	}
 }
 
@@ -89,11 +98,21 @@ int main(int argc, char* argv[]){
 	 	exit(EXIT_FAILURE);
 	}
 
+	/**
+	 *	Verifies if the list was sucessfully initiated
+	 **/
 	if(!processList){
 		fprintf(stderr, "Couldn't allocate enough memory to save a process list\n");
 		exit(EXIT_FAILURE);
 	}
 
+	/**
+	 *	Tries to create the thread that will keep track of childs
+	 **/
+	if(pthread_create(&watcherThread, 0, gottaWatchEmAll,(void *)processList)){
+		fprintf(stderr, "Couldn't create a watcher thread\n");
+		exit(EXIT_FAILURE);
+	}
 
 	/**
 	 * Reads user input, and tries to start a process running
@@ -103,19 +122,20 @@ int main(int argc, char* argv[]){
 	 **/
 	readLineArguments(inputVector, INPUTVECTOR_SIZE);
 
-	if(pthread_create(&watcherThread, 0, gottaWatchEmAll,(void *)processList)){
-		fprintf(stderr, "Couldn't create a watcher thread\n");
-		exit(EXIT_FAILURE);
-	}
 
 	while(!inputVector[0] || strcmp(inputVector[0], "exit")){
 		/* If the user presses enter we just stand-by to read his input again */
 		if(inputVector[0] != NULL){
-			/* Locking list because we need to ensure that child is inserted in list */
+			
+			/* Waiting for a slot to run a proccess */
 			if(sem_wait(&g_canRunProcesses))
 				fprintf(stderr, "Unable to wait on a semaphore. Program won't exit but"
 								" unexpected behaviour might occur.\n");
-			lst_lock(processList);
+
+			/* Locking list because we need to ensure that child is inserted in list */
+			if(lst_lock(processList))
+				fprintf(stderr, "Problem with locking list mutex\n");
+
 			forkId = fork();
 
 			if(forkId < 0){
@@ -152,13 +172,16 @@ int main(int argc, char* argv[]){
 				fprintf(stderr, "%s: couldn't execv\n", inputVector[0]);
 				exit(EXIT_FAILURE);
 			}
+			/* We unlock because we ensured that the monitor thread couldn't write
+		   	on list, even if the child was already a zombie */
+			if(lst_unlock(processList))
+				fprintf(stderr, "Problem with unlocking list mutex\n");
 		}
-		/* We unlock because we ensured that the monitor thread couldn't write
-		   on list, even if the child was already a zombie */
-		lst_unlock(processList);
+
 		readLineArguments(inputVector, INPUTVECTOR_SIZE);
 	}
 
+	/* We post one last time so the thread can get to pthread_exit*/
 	if(sem_post(&g_runningProcesses))
 		fprintf(stderr, "Unable to post the semaphore. We won't exit the program,"
 						" but, unexpected behaviour might occur.\n");
@@ -168,11 +191,15 @@ int main(int argc, char* argv[]){
 	free(inputVector[0]);
 
 
-	pthread_join(watcherThread, NULL);
+	if(pthread_join(watcherThread, NULL))
+		fprintf(stderr, "Error on pthread_join\n");
 
 	/* Destroys the semaphores. */
-	if(sem_destroy(&g_runningProcesses) || sem_destroy(&g_canRunProcesses))
+	if(sem_destroy(&g_runningProcesses))
 		fprintf(stderr, "Couldn't destroy a semaphore.\n");
+
+	if(sem_destroy(&g_canRunProcesses))
+		fprintf(stderr, "Couldn't destroy a semaphore.\n");	
 
 	/* Prints info about every child process to the user */
 	lst_print(processList);
