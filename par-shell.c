@@ -11,10 +11,23 @@
 
 #define PATHNAME_MAX_ARGS 5 /* Program can be ran with 5 arguments */
 #define INPUTVECTOR_SIZE PATHNAME_MAX_ARGS+2 /* vector[0] = program name; vector[-1] = NULL */
-#define MAXPAR 2 /* Set it to the number of cores in your machine. */
+#define MAXPAR 4 /* Set it to the number of cores in your machine. */
 
 sem_t g_runningProcesses;
 sem_t g_canRunProcesses;
+
+void error_sem_wait(sem_t* semaphore){
+	/* Waits on the semaphore, if waiting isn't successful, it prints something to stderr.  */ 
+	if(sem_wait(semaphore))
+		fprintf(stderr, "Semaphore waiting failure: can't wait on running processes.\n");
+}
+
+void error_sem_post(sem_t* semaphore){
+	/* Posts the semaphore, if posting wasn't successful, it prints something to stderr. */
+	if(sem_post(semaphore))
+		fprintf(stderr, "Unable to post the semaphore. We won't exit the program,"
+						" but, unexpected behaviour might occur.\n");	
+}
 
 void *gottaWatchEmAll(void *voidList){
 	/**
@@ -35,37 +48,20 @@ void *gottaWatchEmAll(void *voidList){
 		error_sem_wait(&g_runningProcesses);
 
 		lst_lock(processList);
-
 		if((lst_numactive(processList) == 0) && lst_isfinal(processList)){
 			lst_unlock(processList);
 			pthread_exit(NULL);
 		}
-
 		lst_unlock(processList);
 		
 		pid = wait(&status);
-
 		error_sem_post(&g_canRunProcesses);
 
 		lst_lock(processList);
-
 		update_terminated_process(processList, pid, GET_CURRENT_TIME(), status);
-
 		lst_unlock(processList);
 	}
 }
-
-void error_sem_wait(sem* semaphore){
-	if(sem_wait(semaphore))
-		fprintf(stderr, "Semaphore waiting failure: can't wait on running processes.\n");
-}
-
-void error_sem_post(sem* semaphore){
-	if(sem_post(semaphore))
-		fprintf(stderr, "Unable to post the semaphore. We won't exit the program,"
-						" but, unexpected behaviour might occur.\n");	
-}
-
 
 int main(int argc, char* argv[]){
 	int forkId; // Saves fork()'s return value 
@@ -125,8 +121,6 @@ int main(int argc, char* argv[]){
 	 * Repeats until user input is the exit command.
 	 **/
 	readLineArguments(inputVector, INPUTVECTOR_SIZE);
-
-
 	while(!inputVector[0] || strcmp(inputVector[0], "exit")){
 		/* If the user presses enter we just stand-by to read his input again */
 		if(inputVector[0] != NULL){
@@ -181,7 +175,7 @@ int main(int argc, char* argv[]){
 
 	lst_lock(processList);
 
-	/* Commands do finalize list*/
+	/* Commands to finalize list*/
 	lst_finalize(processList);
 
 	lst_unlock(processList);
@@ -191,7 +185,6 @@ int main(int argc, char* argv[]){
 
 	/* Frees the last user input - the exit command */
 	free(inputVector[0]);
-
 
 	if(pthread_join(watcherThread, NULL))
 		fprintf(stderr, "Error on pthread_join\n");
