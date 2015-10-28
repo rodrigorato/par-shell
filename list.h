@@ -49,10 +49,10 @@ int lst_sizeof(list_t *list);
 int lst_numactive(list_t *list);
 
 /* Locks mutex, consider it the mutex itself */
-int lst_lock(list_t *list);
+void lst_lock(list_t *list);
 
 /* Unlocks mutex, consider it the mutex itself */
-int lst_unlock(list_t *list);
+void lst_unlock(list_t *list);
 
 /* Finalizes list */
 void lst_finalize(list_t *list);
