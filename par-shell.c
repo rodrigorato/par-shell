@@ -32,34 +32,38 @@ void *gottaWatchEmAll(void *voidList){
 	int pid=0, status=0;
 
 	while(1){
-		if(sem_wait(&g_runningProcesses))
-			fprintf(stderr, "Semaphore waiting failure: can't wait on running processes.\n");
+		error_sem_wait(&g_runningProcesses);
 
-		if(lst_lock(processList))
-			fprintf(stderr, "Problem with locking list mutex\n");
+		lst_lock(processList);
 
 		if((lst_numactive(processList) == 0) && lst_isfinal(processList)){
 			lst_unlock(processList);
 			pthread_exit(NULL);
 		}
 
-		if(lst_unlock(processList))
-			fprintf(stderr, "Problem with unlocking list mutex\n");
+		lst_unlock(processList);
 		
 		pid = wait(&status);
 
-		if(sem_post(&g_canRunProcesses))
-			fprintf(stderr, "Unable to post the semaphore. We won't exit the program,"
-							" but, unexpected behaviour might occur.\n");
+		error_sem_post(&g_canRunProcesses);
 
-		if(lst_lock(processList))
-			fprintf(stderr, "Problem with locking list mutex\n");
+		lst_lock(processList);
 
 		update_terminated_process(processList, pid, GET_CURRENT_TIME(), status);
 
-		if(lst_unlock(processList))
-			fprintf(stderr, "Problem with unlocking list mutex\n");
+		lst_unlock(processList);
 	}
+}
+
+void error_sem_wait(sem* semaphore){
+	if(sem_wait(semaphore))
+		fprintf(stderr, "Semaphore waiting failure: can't wait on running processes.\n");
+}
+
+void error_sem_post(sem* semaphore){
+	if(sem_post(semaphore))
+		fprintf(stderr, "Unable to post the semaphore. We won't exit the program,"
+						" but, unexpected behaviour might occur.\n");	
 }
 
 
@@ -128,13 +132,10 @@ int main(int argc, char* argv[]){
 		if(inputVector[0] != NULL){
 			
 			/* Waiting for a slot to run a proccess */
-			if(sem_wait(&g_canRunProcesses))
-				fprintf(stderr, "Unable to wait on a semaphore. Program won't exit but"
-								" unexpected behaviour might occur.\n");
+			error_sem_wait(&g_canRunProcesses);
 
 			/* Locking list because we need to ensure that child is inserted in list */
-			if(lst_lock(processList))
-				fprintf(stderr, "Problem with locking list mutex\n");
+			lst_lock(processList);
 
 			forkId = fork();
 
@@ -155,9 +156,7 @@ int main(int argc, char* argv[]){
 					fprintf(stderr, "Child with PID:%d was lost because "
 									"you didn't have enough memory to save it, "
 									"it's still running.\n", forkId);
-				if(sem_post(&g_runningProcesses))
-					fprintf(stderr, "Unable to post the semaphore. We won't exit the program,"
-									" but, unexpected behaviour might occur.\n");
+				error_sem_post(&g_runningProcesses);
 				free(inputVector[0]);
 			}
 			else{
@@ -174,26 +173,21 @@ int main(int argc, char* argv[]){
 			}
 			/* We unlock because we ensured that the monitor thread couldn't write
 		   	on list, even if the child was already a zombie */
-			if(lst_unlock(processList))
-				fprintf(stderr, "Problem with unlocking list mutex\n");
+			lst_unlock(processList);
 		}
 
 		readLineArguments(inputVector, INPUTVECTOR_SIZE);
 	}
 
-	if(lst_lock(processList))
-		fprintf(stderr, "Problem with locking list mutex\n");
+	lst_lock(processList);
 
 	/* Commands do finalize list*/
 	lst_finalize(processList);
 
-	if(lst_unlock(processList))
-		fprintf(stderr, "Problem with unlocking list mutex\n");
+	lst_unlock(processList);
 
 	/* We post one last time so the thread can get to pthread_exit*/
-	if(sem_post(&g_runningProcesses))
-		fprintf(stderr, "Unable to post the semaphore. We won't exit the program,"
-						" but, unexpected behaviour might occur.\n");
+	error_sem_post(&g_runningProcesses);
 
 	/* Frees the last user input - the exit command */
 	free(inputVector[0]);
