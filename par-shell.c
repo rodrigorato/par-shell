@@ -11,7 +11,7 @@
 
 #define PATHNAME_MAX_ARGS 5 /* Program can be ran with 5 arguments */
 #define INPUTVECTOR_SIZE PATHNAME_MAX_ARGS+2 /* vector[0] = program name; vector[-1] = NULL */
-#define MAXPAR 2 /* Set it to the number of cores in your machine */
+#define MAXPAR 2 /* Set it to the number of cores in your machine. */
 
 sem_t g_runningProcesses;
 sem_t g_canRunProcesses;
