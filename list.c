@@ -95,12 +95,14 @@ int lst_numactive(list_t *list){
 	return list->lst_active;
 }
 
-int lst_lock(list_t *list){
-	return pthread_mutex_lock(list->lst_mutex);
+void lst_lock(list_t *list){
+	if(pthread_mutex_lock(list->lst_mutex))
+		fprintf(stderr, "Couldn't lock the list's mutex!\n");
 }
 
-int lst_unlock(list_t *list){
-	return pthread_mutex_unlock(list->lst_mutex);
+void lst_unlock(list_t *list){
+	if(pthread_mutex_unlock(list->lst_mutex))
+		fprintf(stderr, "Couldn't unlock the list's mutex!\n");
 }
 
 void lst_finalize(list_t *list){
