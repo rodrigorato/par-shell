@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <wait.h>
 #include <pthread.h>
+#include <semaphore.h>
 #include "commandlinereader.h"
 #include "list.h"
 #include "time_helper.h"
@@ -12,9 +13,8 @@
 #define INPUTVECTOR_SIZE PATHNAME_MAX_ARGS+2 /* vector[0] = program name; vector[-1] = NULL */
 #define MAXPAR 4 /* Set it to the number of cores in your machine. */
 
-pthread_cond_t g_canRunProcesses;
-pthread_cond_t g_canWaitProcesses;
 pthread_mutex_t g_condMutex;
+pthread_cond_t g_canWaitProcess, g_canRunProcess;
 int g_runningProcesses = 0;
 
 void *gottaWatchEmAll(void *voidList){
@@ -33,28 +33,29 @@ void *gottaWatchEmAll(void *voidList){
 	int pid=0, status=0;
 
 	while(1){
-
+		//FIX US
 		pthread_mutex_lock(&g_condMutex);
-		while(g_runningProcesses == 0){
-			pthread_cond_wait(&g_canWaitProcesses,&g_condMutex);
-		}
+		while(g_runningProcesses == 0)
+			pthread_cond_wait(&g_canWaitProcess, &g_condMutex);
+		pthread_mutex_unlock(&g_condMutex);
+		//FIX US
 
 		lst_lock(processList);
 		if((lst_numactive(processList) == 0) && lst_isfinal(processList)){
 			lst_unlock(processList);
-			pthread_mutex_unlock(&g_condMutex);
 			pthread_exit(NULL);
 		}
 		lst_unlock(processList);
-
-		pthread_mutex_unlock(&g_condMutex);
-
+		
 		pid = wait(&status);
 
+		//FIX US
 		pthread_mutex_lock(&g_condMutex);
 		g_runningProcesses--;
-		pthread_cond_signal(&g_canRunProcesses);
+		pthread_cond_signal(&g_canRunProcess);
 		pthread_mutex_unlock(&g_condMutex);
+		//FIX US
+
 
 		lst_lock(processList);
 		update_terminated_process(processList, pid, GET_CURRENT_TIME(), status);
@@ -79,10 +80,14 @@ int main(int argc, char* argv[]){
 	 **/
 	list_t *processList = lst_new(); 
 
-	/*FIXME*/
+	//FIX US
+
 	pthread_mutex_init(&g_condMutex, NULL);
-	pthread_cond_init(&g_canRunProcesses, NULL);
-	pthread_cond_init(&g_canWaitProcesses, NULL);
+
+	pthread_cond_init(&g_canRunProcess, NULL);
+	pthread_cond_init(&g_canWaitProcess, NULL);	
+
+	//FIX US
 
 	/**
 	 *	Verifies if the list was sucessfully initiated
@@ -110,15 +115,16 @@ int main(int argc, char* argv[]){
 	while(!inputVector[0] || strcmp(inputVector[0], "exit")){
 		/* If the user presses enter we just stand-by to read his input again */
 		if(inputVector[0] != NULL){
-
+			
+			//FIX US
+			pthread_mutex_lock(&g_condMutex);
+			while(g_runningProcesses >= MAXPAR)
+				pthread_cond_wait(&g_canRunProcess, &g_condMutex);
+			pthread_mutex_unlock(&g_condMutex);
+			//FIX US
 
 			/* Locking list because we need to ensure that child is inserted in list */
 			lst_lock(processList);
-			pthread_mutex_lock(&g_condMutex);
-			while(g_runningProcesses >= MAXPAR){
-				pthread_cond_wait(&g_canRunProcesses, &g_condMutex);
-			}
-			pthread_mutex_unlock(&g_condMutex);
 
 			forkId = fork();
 
@@ -139,11 +145,12 @@ int main(int argc, char* argv[]){
 					fprintf(stderr, "Child with PID:%d was lost because "
 									"you didn't have enough memory to save it, "
 									"it's still running.\n", forkId);
-
+				//FIX US
 				pthread_mutex_lock(&g_condMutex);
 				g_runningProcesses++;
-				pthread_cond_signal(&g_canWaitProcesses);
+				pthread_cond_signal(&g_canWaitProcess);
 				pthread_mutex_unlock(&g_condMutex);
+				//FIX US
 
 				free(inputVector[0]);
 			}
@@ -174,15 +181,14 @@ int main(int argc, char* argv[]){
 
 	lst_unlock(processList);
 
-	pthread_mutex_lock(&g_condMutex);
-	while(g_runningProcesses != 0){
-		pthread_cond_wait(&g_canRunProcesses,&g_condMutex);
-	}
-	g_runningProcesses++;
-	pthread_cond_signal(&g_canWaitProcesses);
-	pthread_mutex_unlock(&g_condMutex);
-	
+	/* We post one last time so the thread can get to pthread_exit*/
+	//FIX US
 
+	pthread_mutex_lock(&g_condMutex);
+	g_runningProcesses++;
+	pthread_cond_signal(&g_canWaitProcess);
+	pthread_mutex_unlock(&g_condMutex);
+	//FIX US
 
 	/* Frees the last user input - the exit command */
 	free(inputVector[0]);
@@ -190,10 +196,15 @@ int main(int argc, char* argv[]){
 	if(pthread_join(watcherThread, NULL))
 		fprintf(stderr, "Error on pthread_join\n");
 
-	/*FIXME*/
-	pthread_mutex_destroy(&g_condMutex);
-	pthread_cond_destroy(&g_canWaitProcesses);
-	pthread_cond_destroy(&g_canRunProcesses);
+	//FIX US
+	while(pthread_mutex_trylock(&g_condMutex));
+  	pthread_mutex_unlock(&g_condMutex);
+  	pthread_mutex_destroy(&g_condMutex);
+
+ 	pthread_cond_destroy(&g_canWaitProcess);
+ 	pthread_cond_destroy(&g_canRunProcess);
+
+	//FIX US
 
 	/* Prints info about every child process to the user */
 	lst_print(processList);
