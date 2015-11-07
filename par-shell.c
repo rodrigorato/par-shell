@@ -4,7 +4,6 @@
 #include <unistd.h>
 #include <wait.h>
 #include <pthread.h>
-#include <semaphore.h>
 #include "commandlinereader.h"
 #include "list.h"
 #include "time_helper.h"
