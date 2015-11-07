@@ -4,7 +4,6 @@
 #include <unistd.h>
 #include <wait.h>
 #include <pthread.h>
-#include <semaphore.h>
 #include "commandlinereader.h"
 #include "list.h"
 #include "time_helper.h"
@@ -13,21 +12,10 @@
 #define INPUTVECTOR_SIZE PATHNAME_MAX_ARGS+2 /* vector[0] = program name; vector[-1] = NULL */
 #define MAXPAR 4 /* Set it to the number of cores in your machine. */
 
-sem_t g_runningProcesses;
-sem_t g_canRunProcesses;
-
-void error_sem_wait(sem_t* semaphore){
-	/* Waits on the semaphore, if waiting isn't successful, it prints something to stderr.  */ 
-	if(sem_wait(semaphore))
-		fprintf(stderr, "Semaphore waiting failure: can't wait on running processes.\n");
-}
-
-void error_sem_post(sem_t* semaphore){
-	/* Posts the semaphore, if posting wasn't successful, it prints something to stderr. */
-	if(sem_post(semaphore))
-		fprintf(stderr, "Unable to post the semaphore. We won't exit the program,"
-						" but, unexpected behaviour might occur.\n");	
-}
+pthread_cond_t g_canRunProcesses;
+pthread_cond_t g_canWaitProcesses;
+pthread_mutex_t g_condMutex;
+int g_runningProcesses = 0;
 
 void *gottaWatchEmAll(void *voidList){
 	/**
@@ -45,17 +33,28 @@ void *gottaWatchEmAll(void *voidList){
 	int pid=0, status=0;
 
 	while(1){
-		error_sem_wait(&g_runningProcesses);
+
+		pthread_mutex_lock(&g_condMutex);
+		while(g_runningProcesses == 0){
+			pthread_cond_wait(&g_canWaitProcesses,&g_condMutex);
+		}
 
 		lst_lock(processList);
 		if((lst_numactive(processList) == 0) && lst_isfinal(processList)){
 			lst_unlock(processList);
+			pthread_mutex_unlock(&g_condMutex);
 			pthread_exit(NULL);
 		}
 		lst_unlock(processList);
-		
+
+		pthread_mutex_unlock(&g_condMutex);
+
 		pid = wait(&status);
-		error_sem_post(&g_canRunProcesses);
+
+		pthread_mutex_lock(&g_condMutex);
+		g_runningProcesses--;
+		pthread_cond_signal(&g_canRunProcesses);
+		pthread_mutex_unlock(&g_condMutex);
 
 		lst_lock(processList);
 		update_terminated_process(processList, pid, GET_CURRENT_TIME(), status);
@@ -80,23 +79,10 @@ int main(int argc, char* argv[]){
 	 **/
 	list_t *processList = lst_new(); 
 
-	/**
-	 * Initializes a semaphore to keep track of the running processes.
-	 * It is declared globally.
-	 **/
-	if(sem_init(&g_runningProcesses, 0, 0)){
-		fprintf(stderr, "Couldn't initialize a semaphore to keep track of your processes!\n");
-		exit(EXIT_FAILURE);
-	}
-
-	/**
-	 * Initializes a semaphore to limit the number of running processes.
-	 * It is declared globally.
-	 **/
-	if(sem_init(&g_canRunProcesses, 0, MAXPAR)){
-	 	fprintf(stderr, "Couldn't initialize a semaphore to limit your processes!\n");
-	 	exit(EXIT_FAILURE);
-	}
+	/*FIXME*/
+	pthread_mutex_init(&g_condMutex, NULL);
+	pthread_cond_init(&g_canRunProcesses, NULL);
+	pthread_cond_init(&g_canWaitProcesses, NULL);
 
 	/**
 	 *	Verifies if the list was sucessfully initiated
@@ -124,12 +110,15 @@ int main(int argc, char* argv[]){
 	while(!inputVector[0] || strcmp(inputVector[0], "exit")){
 		/* If the user presses enter we just stand-by to read his input again */
 		if(inputVector[0] != NULL){
-			
-			/* Waiting for a slot to run a proccess */
-			error_sem_wait(&g_canRunProcesses);
+
 
 			/* Locking list because we need to ensure that child is inserted in list */
 			lst_lock(processList);
+			pthread_mutex_lock(&g_condMutex);
+			while(g_runningProcesses >= MAXPAR){
+				pthread_cond_wait(&g_canRunProcesses, &g_condMutex);
+			}
+			pthread_mutex_unlock(&g_condMutex);
 
 			forkId = fork();
 
@@ -150,7 +139,12 @@ int main(int argc, char* argv[]){
 					fprintf(stderr, "Child with PID:%d was lost because "
 									"you didn't have enough memory to save it, "
 									"it's still running.\n", forkId);
-				error_sem_post(&g_runningProcesses);
+
+				pthread_mutex_lock(&g_condMutex);
+				g_runningProcesses++;
+				pthread_cond_signal(&g_canWaitProcesses);
+				pthread_mutex_unlock(&g_condMutex);
+
 				free(inputVector[0]);
 			}
 			else{
@@ -180,8 +174,15 @@ int main(int argc, char* argv[]){
 
 	lst_unlock(processList);
 
-	/* We post one last time so the thread can get to pthread_exit*/
-	error_sem_post(&g_runningProcesses);
+	pthread_mutex_lock(&g_condMutex);
+	while(g_runningProcesses != 0){
+		pthread_cond_wait(&g_canRunProcesses,&g_condMutex);
+	}
+	g_runningProcesses++;
+	pthread_cond_signal(&g_canWaitProcesses);
+	pthread_mutex_unlock(&g_condMutex);
+	
+
 
 	/* Frees the last user input - the exit command */
 	free(inputVector[0]);
@@ -189,12 +190,10 @@ int main(int argc, char* argv[]){
 	if(pthread_join(watcherThread, NULL))
 		fprintf(stderr, "Error on pthread_join\n");
 
-	/* Destroys the semaphores. */
-	if(sem_destroy(&g_runningProcesses))
-		fprintf(stderr, "Couldn't destroy a semaphore.\n");
-
-	if(sem_destroy(&g_canRunProcesses))
-		fprintf(stderr, "Couldn't destroy a semaphore.\n");	
+	/*FIXME*/
+	pthread_mutex_destroy(&g_condMutex);
+	pthread_cond_destroy(&g_canWaitProcesses);
+	pthread_cond_destroy(&g_canRunProcesses);
 
 	/* Prints info about every child process to the user */
 	lst_print(processList);
