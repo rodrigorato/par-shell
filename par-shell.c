@@ -7,6 +7,7 @@
 #include "commandlinereader.h"
 #include "list.h"
 #include "time_helper.h"
+#include "error_helper.h"
 
 #define PATHNAME_MAX_ARGS 5 /* Program can be ran with 5 arguments */
 #define INPUTVECTOR_SIZE PATHNAME_MAX_ARGS+2 /* vector[0] = program name; vector[-1] = NULL */
@@ -32,14 +33,13 @@ void *gottaWatchEmAll(void *voidList){
 	int pid=0, status=0;
 
 	while(1){
-		if(pthread_mutex_lock(&g_condMutex))
-			fprintf(stderr, "Couldn't lock a condition variable associated mutex!\n");
+		/* Waits until theres is a process to wait() on. */
+		errMutexLock(&g_condMutex, ERR_LOCKCONDVARMUTEX);
 		while(g_runningProcesses == 0)
-			if(pthread_cond_wait(&g_canWaitProcess, &g_condMutex))
-				fprintf(stderr, "Couldn't wait on a condition variable!\n");
-		if(pthread_mutex_unlock(&g_condMutex))
-			fprintf(stderr, "Couldn't unlock a condition variable related mutex!\n");
+			errCondVarWait(&g_canWaitProcess, &g_condMutex, ERR_WAITCONDVAR);
+		errMutexUnlock(&g_condMutex, ERR_UNLOCKCONDVARMUTEX);
 
+		/* Checks if the user has prompted to exit the program */
 		lst_lock(processList);
 		if((lst_numactive(processList) == 0) && lst_isfinal(processList)){
 			lst_unlock(processList);
@@ -49,15 +49,13 @@ void *gottaWatchEmAll(void *voidList){
 		
 		pid = wait(&status);
 
-		if(pthread_mutex_lock(&g_condMutex))
-			fprintf(stderr, "Couldn't lock a condition variable related mutex!\n");
+		/* Signals the main thread as it can now run one more process. */
+		errMutexLock(&g_condMutex, ERR_LOCKCONDVARMUTEX);
 		g_runningProcesses--;
-		if(pthread_cond_signal(&g_canRunProcess))
-			fprintf(stderr, "Couldn't signal a condition variable!\n");
-		if(pthread_mutex_unlock(&g_condMutex))
-			fprintf(stderr, "Couldn't unlock a condition variable related mutex!\n");
+		errCondVarSignal(&g_canRunProcess, ERR_SIGNALCONDVAR);
+		errMutexUnlock(&g_condMutex, ERR_UNLOCKCONDVARMUTEX);
 
-
+		/* Saves the process it got through the wait() in a list. */
 		lst_lock(processList);
 		update_terminated_process(processList, pid, GET_CURRENT_TIME(), status);
 		lst_unlock(processList);
@@ -83,27 +81,19 @@ int main(int argc, char* argv[]){
 	list_t *processList = lst_new(); 
 
 	/* Initializes the mutex associated with the condition variables. */
-	if(pthread_mutex_init(&g_condMutex, NULL))
-		fprintf(stderr, "Couldn't create a mutex to keep track of the condition variables!\n");
+	errMutexInit(&g_condMutex, ERR_INITCONDVARMUTEX);
 
 	/* Initializes the condition variables used to fork()/wait() on processes. */
-	if(pthread_cond_init(&g_canRunProcess, NULL))
-		fprintf(stderr, "Couldn't initialize a condition variable!\n");
-	if(pthread_cond_init(&g_canWaitProcess, NULL))
-		fprintf(stderr, "Couldn't initialize a condition variable!\n");
-	
+	errCondVarInit(&g_canRunProcess, ERR_INITCONDVAR);
+	errCondVarInit(&g_canWaitProcess, ERR_INITCONDVAR);
 
 	/* Verifies if the list was sucessfully initiated */
-	if(!processList){
-		fprintf(stderr, "Couldn't allocate enough memory to save a process list\n");
-		exit(EXIT_FAILURE);
-	}
+	if(!processList)
+		defaultErrorBehavior("Couldn't create an instance of a list!"); // See error_helper.h
 
 	/* Tries to create the thread that will keep track of childs */
-	if(pthread_create(&watcherThread, 0, gottaWatchEmAll,(void *)processList)){
-		fprintf(stderr, "Couldn't create a watcher thread\n");
-		exit(EXIT_FAILURE);
-	}
+	if(pthread_create(&watcherThread, 0, gottaWatchEmAll,(void *)processList))
+		defaultErrorBehavior("Couldn't start a watcher thread."); // See error_helper.h
 
 	/**
 	 * Reads user input, and tries to start a process running
@@ -117,51 +107,35 @@ int main(int argc, char* argv[]){
 		if(inputVector[0] != NULL){
 			
 			/* Waits while we can't run any more processes */			
-			if(pthread_mutex_lock(&g_condMutex))
-				fprintf(stderr, "Couldn't lock a condition variable related mutex!\n");
+			errMutexLock(&g_condMutex, ERR_LOCKCONDVARMUTEX);
 
 			while(g_runningProcesses >= MAXPAR)
-				if(pthread_cond_wait(&g_canRunProcess, &g_condMutex))
-					fprintf(stderr, "Couldn't wait on a condition variable!\n");
+				errCondVarWait(&g_canRunProcess, &g_condMutex, ERR_WAITCONDVAR);
 
-			if(pthread_mutex_unlock(&g_condMutex))
-				fprintf(stderr, "Couldn't unlock a condition variable associated mutex!\n");
+			errMutexUnlock(&g_condMutex, ERR_UNLOCKCONDVARMUTEX);
 
 			/* Locking list because we need to ensure that child is inserted in list */
 			lst_lock(processList);
 
 			forkId = fork();
 
-			if(forkId < 0){
-				/* Couldn't fork - maybe not enough memory? */
-				fprintf(stderr, "Couldn't fork\n");
-			}
+			if(forkId < 0)
+				defaultErrorBehavior("Couldn't fork!"); // See error_helper.h
 			else if (forkId > 0){
 				/**
 				 * Runs the parent process' code:
 				 * Saves the child process info in a list and frees
 				 * the allocated memory used to save the user input.
-				 * 
-				 * WARNING: If there isn't enough memory to keep track of the child process,
-				 *			meaning we won't be able to save it on our list, it still executes.
 				 **/
-				if(!insert_new_process(processList, forkId, GET_CURRENT_TIME(), inputVector[0])) 
-					fprintf(stderr, "Child with PID:%d was lost because "
-									"you didn't have enough memory to save it, "
-									"it's still running.\n", forkId);
+				if(!insert_new_process(processList, forkId, GET_CURRENT_TIME(), inputVector[0]))
+					defaultErrorBehavior("Can't keep track of a child process. Exiting.");
 				
 				/* Signals so that the monitoring thread can wait() on the ran processes. */
-				if(pthread_mutex_lock(&g_condMutex))
-					fprintf(stderr, "Couldn't lock a condition variable related mutex!\n");
-				
+				errMutexLock(&g_condMutex, ERR_LOCKCONDVARMUTEX);
 				g_runningProcesses++;
-
-				if(pthread_cond_signal(&g_canWaitProcess))
-					fprintf(stderr, "Couldn't signal a condition variable!\n");
-
-				if(pthread_mutex_unlock(&g_condMutex))
-					fprintf(stderr, "Couldn't unlock a condition variable related mutex!\n");
-
+				errCondVarSignal(&g_canWaitProcess, ERR_SIGNALCONDVAR);
+				errMutexUnlock(&g_condMutex, ERR_UNLOCKCONDVARMUTEX);
+				
 				free(inputVector[0]);
 			}
 			else{
@@ -173,8 +147,7 @@ int main(int argc, char* argv[]){
 				 *		    the process exits with EXIT_FAILURE.
 				 **/
 				execv(inputVector[0], inputVector);
-				fprintf(stderr, "%s: couldn't execv\n", inputVector[0]);
-				exit(EXIT_FAILURE);
+				defaultErrorBehavior("Couldn't execv a program.\n");
 			}
 			/* We unlock because we ensured that the monitor thread couldn't write
 		   	on list, even if the child was already a zombie */
@@ -192,36 +165,26 @@ int main(int argc, char* argv[]){
 	lst_unlock(processList);
 
 	/* We post one last time so the thread can get to pthread_exit*/
-	if(pthread_mutex_lock(&g_condMutex))
-		fprintf(stderr, "Couldn't lock a condition variable related mutex!\n");
-				
+	errMutexLock(&g_condMutex, ERR_LOCKCONDVARMUTEX);
 	g_runningProcesses++;
-
-	if(pthread_cond_signal(&g_canWaitProcess))
-		fprintf(stderr, "Couldn't signal a condition variable!\n");
-
-	if(pthread_mutex_unlock(&g_condMutex))
-		fprintf(stderr, "Couldn't unlock a condition variable related mutex!\n");
-
+	errCondVarSignal(&g_canWaitProcess, ERR_SIGNALCONDVAR);
+	errMutexUnlock(&g_condMutex, ERR_UNLOCKCONDVARMUTEX);
+				
 
 	/* Frees the last user input - the exit command */
 	free(inputVector[0]);
 
 	if(pthread_join(watcherThread, NULL))
-		fprintf(stderr, "Error on pthread_join\n");
+		defaultErrorBehavior("Error on pthread_join().");
 
 	while(pthread_mutex_trylock(&g_condMutex)); //will lock on trylock failure
-  	if(pthread_mutex_unlock(&g_condMutex))
-  		fprintf(stderr, "Couldn't unlock a condition variable related mutex!\n");
-  	if(pthread_mutex_destroy(&g_condMutex))
-  		fprintf(stderr, "Couldn't destroy a condition variable associated mutex!\n");
+  	errMutexUnlock(&g_condMutex, ERR_UNLOCKCONDVARMUTEX);
+  	errMutexDestroy(&g_condMutex, ERR_DESTROYCONDVARMUTEX);
 
- 	if(pthread_cond_destroy(&g_canWaitProcess))
- 		fprintf(stderr, "Couldn't destroy a condition variable!\n");
+  	errCondVarDestroy(&g_canWaitProcess, ERR_DESTROYCONDVAR);
  	
- 	if(pthread_cond_destroy(&g_canRunProcess))
- 		fprintf(stderr, "Couldn't destroy a condition variable!\n");
-
+ 	errCondVarDestroy(&g_canRunProcess, ERR_DESTROYCONDVAR);
+ 	
 	/* Prints info about every child process to the user */
 	lst_print(processList);
 
