@@ -52,6 +52,9 @@ void errCondVarDestroy(pthread_cond_t* condvar, char* message);
 
 
 /* DEFAULT ERROR MESSAGES DEFINITIONS: */
+#define ERR_DESTROYMUTEX 		"ERROR: Couldn't destroy a Mutex!"
+#define ERR_LOCKMUTEX 			"ERROR: Couldn't lock a Mutex!"
+#define ERR_UNLOCKMUTEX 		"ERROR: Couldn't unlock a Mutex!"
 #define ERR_INITCONDVARMUTEX	"ERROR: Couldn't initialize a Condition Variable associated Mutex!"
 #define ERR_LOCKCONDVARMUTEX 	"ERROR: Couldn't lock a Condition Variable associated Mutex!"
 #define ERR_UNLOCKCONDVARMUTEX 	"ERROR: Couldn't unlock a Condition Variable associated Mutex!"

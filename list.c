@@ -3,6 +3,7 @@
 #include <string.h>
 #include <time.h>
 #include <pthread.h>
+#include "error_helper.h"
 #include "list.h"
 #include "time_helper.h"
 		
@@ -36,8 +37,8 @@ void lst_destroy(list_t *list){
 
   	/* As soon as the mutex is unlocked the list is destroyed */
   	while(pthread_mutex_trylock(list->lst_mutex));
-  	pthread_mutex_unlock(list->lst_mutex);
-  	pthread_mutex_destroy(list->lst_mutex);
+  	errMutexUnlock(list->lst_mutex, ERR_UNLOCKMUTEX);
+  	errMutexDestroy(list->lst_mutex, ERR_DESTROYMUTEX);
   	free(list->lst_mutex);
 	free(list);
 }
@@ -96,13 +97,11 @@ int lst_numactive(list_t *list){
 }
 
 void lst_lock(list_t *list){
-	if(pthread_mutex_lock(list->lst_mutex))
-		fprintf(stderr, "Couldn't lock the list's mutex!\n");
+	errMutexLock(list->lst_mutex, ERR_LOCKMUTEX);
 }
 
 void lst_unlock(list_t *list){
-	if(pthread_mutex_unlock(list->lst_mutex))
-		fprintf(stderr, "Couldn't unlock the list's mutex!\n");
+	errMutexUnlock(list->lst_mutex, ERR_UNLOCKMUTEX);
 }
 
 void lst_finalize(list_t *list){
