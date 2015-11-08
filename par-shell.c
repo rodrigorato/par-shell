@@ -12,10 +12,12 @@
 #define PATHNAME_MAX_ARGS 5 /* Program can be ran with 5 arguments */
 #define INPUTVECTOR_SIZE PATHNAME_MAX_ARGS+2 /* vector[0] = program name; vector[-1] = NULL */
 #define MAXPAR 4 /* Set it to the number of cores in your machine. */
+#define MAXLOGLINESIZE 256
 
 pthread_mutex_t g_condMutex;
 pthread_cond_t g_canWaitProcess, g_canRunProcess;
-int g_runningProcesses = 0;
+int g_runningProcesses = 0, currentIteration = 0, totalExecutionTime = 0;
+FILE* logfile;
 
 void *gottaWatchEmAll(void *voidList){
 	/**
@@ -33,6 +35,8 @@ void *gottaWatchEmAll(void *voidList){
 	int pid=0, status=0;
 
 	while(1){
+		int i = 0;
+		lst_iitem_t* waitedProcess;
 		/* Waits until theres is a process to wait() on. */
 		errMutexLock(&g_condMutex, ERR_LOCKCONDVARMUTEX);
 		while(g_runningProcesses == 0)
@@ -48,6 +52,9 @@ void *gottaWatchEmAll(void *voidList){
 		lst_unlock(processList);
 		
 		pid = wait(&status);
+		
+
+
 
 		/* Signals the main thread as it can now run one more process. */
 		errMutexLock(&g_condMutex, ERR_LOCKCONDVARMUTEX);
@@ -57,14 +64,27 @@ void *gottaWatchEmAll(void *voidList){
 
 		/* Saves the process it got through the wait() in a list. */
 		lst_lock(processList);
-		update_terminated_process(processList, pid, GET_CURRENT_TIME(), status);
+		waitedProcess = update_terminated_process(processList, pid, GET_CURRENT_TIME(), status);
+
+		i = GET_DURATION_TIME(waitedProcess->endtime, waitedProcess->starttime);
+		totalExecutionTime+=i;
+
+		if(!fprintf(logfile, "iteracao %d\n", currentIteration))
+				defaultErrorBehavior("Couldn't write into the log.txt file!");
+		if(!fprintf(logfile, "pid: %d execution time %d s\n", pid, i))
+				defaultErrorBehavior("Couldn't write into the log.txt file!");
+		if(!fprintf(logfile, "total execution time: %d s\n", totalExecutionTime))
+			defaultErrorBehavior("Couldn't write into the log.txt file!");
+		currentIteration++;
+	
+
 		lst_unlock(processList);
 	}
 }
 
 
 int main(int argc, char* argv[]){
-	int forkId; // Saves fork()'s return value 
+	int forkId, procTime = 0; // Saves fork()'s return value 
 	pthread_t watcherThread;
 	
 	/** 
@@ -72,13 +92,28 @@ int main(int argc, char* argv[]){
 	 * 0th index is the program's name, followed by it's arguments (max 5)
 	 * The index after the last argument is set to NULL.  
 	 **/
-	char* inputVector[INPUTVECTOR_SIZE] = {};
+	char* inputVector[INPUTVECTOR_SIZE] = {}, logLine1[MAXLOGLINESIZE], 
+		  logLine2[MAXLOGLINESIZE], logLine3[MAXLOGLINESIZE];
 
 	/** 
 	 * Initializes a list where we store the processes ran by the shell
 	 * along with some information about each process. (check list.h)
 	 **/
 	list_t *processList = lst_new(); 
+
+	/* Open the log file for reading and appending */
+	if((logfile = fopen("log.txt", "a+")) == NULL)
+		defaultErrorBehavior("Couldn't open the log.txt file!");
+
+	//gets current iteration and total execution time
+	while(fgets(logLine1, MAXLOGLINESIZE, logfile) &&
+		  fgets(logLine2, MAXLOGLINESIZE, logfile) &&
+		  fgets(logLine3, MAXLOGLINESIZE, logfile)){
+		sscanf(logLine1, "%s %d", logLine2, &currentIteration); // we don't really need the info on logLine2
+		sscanf(logLine3, "%[^:]: %d %s", logLine2, &procTime, logLine2); // so we just use logLine2 as a buffer
+		totalExecutionTime+=procTime;
+	}
+	currentIteration = !currentIteration ? 0:(currentIteration+1); // if there are no iterations keep it as 0
 
 	/* Initializes the mutex associated with the condition variables. */
 	errMutexInit(&g_condMutex, ERR_INITCONDVARMUTEX);
@@ -185,6 +220,12 @@ int main(int argc, char* argv[]){
  	
  	errCondVarDestroy(&g_canRunProcess, ERR_DESTROYCONDVAR);
  	
+ 	if(fflush(logfile))
+ 		defaultErrorBehavior("Couldn't flush the log.txt file!");
+
+ 	if(fclose(logfile))
+ 		defaultErrorBehavior("Couldn't close the log.txt file!");
+
 	/* Prints info about every child process to the user */
 	lst_print(processList);
 

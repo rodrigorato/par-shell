@@ -40,7 +40,7 @@ void lst_destroy(list_t *list);
 int insert_new_process(list_t *list, int pid, time_t starttime, char* cmd);
 
 /* Updates the process info with it's endtime and exit status. */
-void update_terminated_process(list_t *list, int pid, time_t endtime, int status);
+lst_iitem_t* update_terminated_process(list_t *list, int pid, time_t endtime, int status);
 
 /* Returns the number of processes stored on the list, running or not. */
 int lst_sizeof(list_t *list);

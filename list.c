@@ -74,18 +74,19 @@ int insert_new_process(list_t *list, int pid, time_t starttime, char* cmd){
 }
 
 
-void update_terminated_process(list_t *list, int pid, time_t endtime,int status){
+lst_iitem_t* update_terminated_process(list_t *list, int pid, time_t endtime,int status){
 	lst_iitem_t *temp = list->first;
 	for(; temp!=NULL; temp=temp->next){
 		if((temp->pid) == pid){
 			temp->endtime = endtime;
 			temp->status = status;
 			(list->lst_active)--;
-			break;
+			return temp;
 		}
 	}
 	if(!temp)
 		printf("no process with pid: %d\n", pid);
+	return NULL;
 }
 
 int lst_sizeof(list_t *list){
