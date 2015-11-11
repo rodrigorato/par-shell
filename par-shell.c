@@ -16,7 +16,8 @@
 
 pthread_mutex_t g_condMutex;
 pthread_cond_t g_canWaitProcess, g_canRunProcess;
-int g_runningProcesses = 0, currentIteration = 0, totalExecutionTime = 0;
+int g_runningProcesses = 0, totalExecutionTime = 0;
+int currentIteration = -1; // we start at iteration0;
 FILE* logfile;
 
 void *gottaWatchEmAll(void *voidList){
@@ -113,7 +114,7 @@ int main(int argc, char* argv[]){
 		sscanf(logLine3, "%[^:]: %d %s", logLine2, &procTime, logLine2); // so we just use logLine2 as a buffer
 		totalExecutionTime+=procTime;
 	}
-	currentIteration = !currentIteration ? 0:(currentIteration+1); // if there are no iterations keep it as 0
+	currentIteration++; // if there are no iterations keep it as 0
 
 	/* Initializes the mutex associated with the condition variables. */
 	errMutexInit(&g_condMutex, ERR_INITCONDVARMUTEX);
