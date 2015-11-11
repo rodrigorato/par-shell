@@ -79,6 +79,9 @@ void *gottaWatchEmAll(void *voidList){
 		currentIteration++;
 	
 
+ 		if(fflush(logfile)) // guarantees the info is on the file as soon as the process ends
+ 			defaultErrorBehavior("Couldn't flush the log.txt file!");
+
 		lst_unlock(processList);
 	}
 }
@@ -220,9 +223,6 @@ int main(int argc, char* argv[]){
   	errCondVarDestroy(&g_canWaitProcess, ERR_DESTROYCONDVAR);
  	
  	errCondVarDestroy(&g_canRunProcess, ERR_DESTROYCONDVAR);
- 	
- 	if(fflush(logfile))
- 		defaultErrorBehavior("Couldn't flush the log.txt file!");
 
  	if(fclose(logfile))
  		defaultErrorBehavior("Couldn't close the log.txt file!");
