@@ -23,5 +23,8 @@ fibonacci: fibonacci.o
 fibonacci.o: fibonacci.c
 	gcc -Wall -g -c fibonacci.c
 
+cleanlog:
+	rm log.txt
+
 clean: 
 	rm -f *.o par-shell fibonacci log.txt
