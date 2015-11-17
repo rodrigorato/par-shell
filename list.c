@@ -141,6 +141,7 @@ void lst_print(list_t *list){
 }
 
 int lst_remove(list_t *list, int pid){
+	/*THIS FUNCTION ISNT WORKING, havent been actualized*/
 	lst_iitem_t *temp = list->first, *aux=NULL;
 	for(; temp && temp->pid != pid; aux=temp, temp=temp->next);
 	if(temp){

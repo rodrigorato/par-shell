@@ -66,6 +66,7 @@ void lst_print(list_t *list);
 /* Removes the process with that pid from the list
  * Return value is 0 if the process wasn't found
  * else, the return value is 1	*/
+/*THIS FUNCTION ISNT WORKING, havent been actualized*/
 int lst_remove(list_t *list, int pid);
 
 #endif /* __LIST_H__ */
