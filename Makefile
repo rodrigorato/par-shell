@@ -1,6 +1,7 @@
 # PAR-SHELL MAKEFILE USAGE:
-# make par-shell : compila o projeto fazendo uso de ficheiros objecto
-# make clean : elimina ficheiros objecto e o executavel da par-shell
+# make par-shell : compila o projeto fazendo uso de ficheiros objecto mas nao limpa o log
+# make clean : elimina ficheiros objecto, o executavel da par-shell e o log.txt
+# make cleanlog : elimina o ficheiro log.txt
 
 par-shell: par-shell.o list.o error_helper.o  commandlinereader.o fibonacci
 	gcc -pthread -o par-shell par-shell.o error_helper.o commandlinereader.o list.o
