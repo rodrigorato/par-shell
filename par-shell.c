@@ -115,8 +115,8 @@ int main(int argc, char* argv[]){
 		  fgets(logLine3, MAXLOGLINESIZE, logfile)){
 		sscanf(logLine1, "%s %d", logLine2, &currentIteration); // we don't really need the info on logLine2
 		sscanf(logLine3, "%[^:]: %d %s", logLine2, &procTime, logLine2); // so we just use logLine2 as a buffer
-		totalExecutionTime+=procTime;
 	}
+	totalExecutionTime+=procTime;
 	currentIteration++; // if there are no iterations keep it as 0
 
 	/* Initializes the mutex associated with the condition variables. */
