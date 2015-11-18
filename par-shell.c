@@ -186,7 +186,7 @@ int main(int argc, char* argv[]){
 				 *		    the process exits with EXIT_FAILURE.
 				 **/
 				execv(inputVector[0], inputVector);
-				defaultErrorBehavior("Couldn't execv a program.\n");
+				defaultErrorBehavior("Couldn't execv a program.");
 			}
 			/* We unlock because we ensured that the monitor thread couldn't write
 		   	on list, even if the child was already a zombie */
