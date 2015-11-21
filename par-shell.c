@@ -194,6 +194,7 @@ int main(int argc, char* argv[]){
 				char* name_string = malloc(sizeof(char)*(MAXPIDLENGTH + 20)); // ~20 is the number of chars needed for the rest of the filename
 				sprintf(name_string, "par-shell-out-%d.txt", getpid());
 				freopen(name_string, "w", stdout);
+				free(name_string);
 				execv(inputVector[0], inputVector);
 				defaultErrorBehavior("Couldn't execv a program.");
 			}
