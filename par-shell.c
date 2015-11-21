@@ -13,6 +13,7 @@
 #define INPUTVECTOR_SIZE PATHNAME_MAX_ARGS+2 /* vector[0] = program name; vector[-1] = NULL */
 #define MAXPAR 4 /* Set it to the number of cores in your machine. */
 #define MAXLOGLINESIZE 256
+#define MAXPIDLENGTH 8 /* The max PID length */
 
 pthread_mutex_t g_condMutex;
 pthread_cond_t g_canWaitProcess, g_canRunProcess;
@@ -185,6 +186,14 @@ int main(int argc, char* argv[]){
 				 * WARNING: If the program wasn't found,
 				 *		    the process exits with EXIT_FAILURE.
 				 **/
+				
+				/* 
+					We will now redirect the child process's output to a file named:
+				   par-shell-out-PID.txt : PID = the child processes pid
+				 */
+				char* name_string = malloc(sizeof(char)*(MAXPIDLENGTH + 20)); // ~20 is the number of chars needed for the rest of the filename
+				sprintf(name_string, "par-shell-out-%d.txt", getpid());
+				freopen(name_string, "w", stdout);
 				execv(inputVector[0], inputVector);
 				defaultErrorBehavior("Couldn't execv a program.");
 			}
