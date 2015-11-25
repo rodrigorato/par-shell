@@ -64,5 +64,8 @@ void errCondVarDestroy(pthread_cond_t* condvar, char* message);
 #define ERR_SIGNALCONDVAR 		"ERROR: Couldn't signal a Condition Variable!"
 #define ERR_DESTROYCONDVAR 		"ERROR: Couldn't destroy a Condition Variable!"
 #define ERR_WRONGARGUMENTS		"ERROR: Wrong number of arguments!"
+#define ERR_WRITETOPIPE			"ERROR: Couldn't write to a pipe!"
+#define ERR_READFROM			"ERROR: Couldn't read from a pipe!"
+
 
 #endif /* __ERROR_HELPER_H__ */
