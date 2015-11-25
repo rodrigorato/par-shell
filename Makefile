@@ -5,16 +5,16 @@
 
 par-shell: par-shell.o list.o error_helper.o  commandlinereader.o fibonacci par-shell-terminal.o pipes.o
 	gcc -pthread -o par-shell par-shell.o error_helper.o commandlinereader.o list.o pipes.o
-	gcc -o par-shell-terminal par-shell-terminal.o error_helper.o commandlinereader.o pipes.o error_helper.o
-
+	gcc -o par-shell-terminal par-shell-terminal.o error_helper.o commandlinereader.o pipes.o 
+	
 par-shell-terminal.o: par-shell-terminal.c
 	gcc -Wall -g -c par-shell-terminal.c
 
 par-shell.o: par-shell.c list.o
 	gcc -Wall -g -c par-shell.c
 
-pipes.o: pipes.c pipes.h
-	gcc -Wall -g -c pipes.c
+pipes.o: pipes.c pipes.h error_helper.o
+	gcc -Wall -g -c pipes.c 
 
 list.o: list.c list.h
 	gcc -Wall -g -c list.c 
