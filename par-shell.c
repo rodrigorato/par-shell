@@ -4,6 +4,8 @@
 #include <unistd.h>
 #include <wait.h>
 #include <pthread.h>
+#include <fcntl.h> /* open flags */
+#include <sys/stat.h> /* open mode_t */
 #include "commandlinereader.h"
 #include "list.h"
 #include "time_helper.h"
@@ -13,7 +15,8 @@
 #define INPUTVECTOR_SIZE PATHNAME_MAX_ARGS+2 /* vector[0] = program name; vector[-1] = NULL */
 #define MAXPAR 4 /* Set it to the number of cores in your machine. */
 #define MAXLOGLINESIZE 256
-#define MAXPIDLENGTH 8 /* The max PID length */
+#define MAXFILENAMELENGTH 28 /* The max filename length */
+#define INPUTPIPENAME "par-shell-in" /* The input pipe's name */
 
 pthread_mutex_t g_condMutex;
 pthread_cond_t g_canWaitProcess, g_canRunProcess;
@@ -191,10 +194,9 @@ int main(int argc, char* argv[]){
 					We will now redirect the child process's output to a file named:
 				   par-shell-out-PID.txt : PID = the child processes pid
 				 */
-				char* name_string = malloc(sizeof(char)*(MAXPIDLENGTH + 20)); // ~20 is the number of chars needed for the rest of the filename
+				char name_string[MAXFILENAMELENGTH];
 				sprintf(name_string, "par-shell-out-%d.txt", getpid());
-				freopen(name_string, "w", stdout);
-				free(name_string);
+				freopen(name_string, "w", stdout); /* Does what a close() and dup() call would do in one instruction only */
 				execv(inputVector[0], inputVector);
 				defaultErrorBehavior("Couldn't execv a program.");
 			}

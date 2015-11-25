@@ -63,5 +63,6 @@ void errCondVarDestroy(pthread_cond_t* condvar, char* message);
 #define ERR_WAITCONDVAR 		"ERROR: Couldn't wait on a Condition Variable!"
 #define ERR_SIGNALCONDVAR 		"ERROR: Couldn't signal a Condition Variable!"
 #define ERR_DESTROYCONDVAR 		"ERROR: Couldn't destroy a Condition Variable!"
+#define ERR_WRONGARGUMENTS		"ERROR: Wrong number of arguments!"
 
 #endif /* __ERROR_HELPER_H__ */

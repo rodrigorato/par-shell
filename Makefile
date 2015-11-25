@@ -4,7 +4,8 @@
 # make cleanlog : elimina o ficheiro log.txt
 
 par-shell: par-shell.o list.o error_helper.o  commandlinereader.o fibonacci par-shell-terminal.o
-	gcc -pthread -o par-shell par-shell.o error_helper.o commandlinereader.o list.o && gcc -o par-shell-terminal par-shell-terminal.o
+	gcc -pthread -o par-shell par-shell.o error_helper.o commandlinereader.o list.o
+	gcc -o par-shell-terminal par-shell-terminal.o error_helper.o commandlinereader.o
 
 par-shell-terminal.o: par-shell-terminal.c
 	gcc -Wall -g -c par-shell-terminal.c
