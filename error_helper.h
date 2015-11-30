@@ -3,6 +3,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
+#include <unistd.h>
+//#include <fnctl.h>
+
 
 /**
  *	This file and corresponding .c are used
@@ -49,6 +52,12 @@ void errCondVarSignal(pthread_cond_t* condvar, char* message);
 
 /* Destroys a Condition Variable */
 void errCondVarDestroy(pthread_cond_t* condvar, char* message);
+
+/* Writes a char array to a named pipe to be read later */
+void errWriteToPipe(char** sendv, FILE* pipeDescriptor);
+
+/* Reads a char array from a named pipe, sent by the function above */
+void errReadFromPipe(char** readv, FILE* pipeDescriptor, int maxBufSize);
 
 
 /* DEFAULT ERROR MESSAGES DEFINITIONS: */
