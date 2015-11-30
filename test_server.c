@@ -28,22 +28,23 @@ int main(){
 
     /* create the FIFO (named pipe) */
     mkfifo(inputPipe, 0666);
-    
-    char buf[INPUTVECTOR_SIZE][MAX_BUF];
+
+    char* buf[INPUTVECTOR_SIZE];
+    for(i = 0; i < INPUTVECTOR_SIZE; i++) buf[i] = (char*) malloc(sizeof(char)*MAX_BUF);
 
     /* open, read, and display the message from the FIFO */
-    inputPipeDescriptor = open(inputPipe, O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR);
+    inputPipeDescriptor = open(inputPipe, O_CREAT | O_RDONLY, S_IRUSR | S_IWUSR);
     do{
 	    errReadFromPipe(buf, inputPipeDescriptor, MAX_BUF);
-	    
 	    // TEST
 
-	    for(i = 0; i < MAX_BUF; i++)
-	    	printf("%s ", buf[i]);
-
+	    for(i = 0; buf[i] != NULL && i < INPUTVECTOR_SIZE; i++)
+	    	printf("no server: %s\n", buf[i]);
+        printf("endfor\n");
     	// TEST
 	}while(commandType(buf[0]) == NORMAL_COMMAND);
 
+    for(i = 0; i < INPUTVECTOR_SIZE; i++) free(buf[i]);
     close(inputPipeDescriptor);
     unlink(inputPipe);
 

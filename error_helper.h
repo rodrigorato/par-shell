@@ -11,9 +11,9 @@
 /**
  *	This file and corresponding .c are used
  *  to work with every function that may cause an error.
- *  As we aren't checking the errno variable for each 
+ *  As we aren't checking the errno variable for each
  *  error and the way we manage the errors is pretty simple
- *  this definitions come in handy so we don't get repetitive 
+ *  this definitions come in handy so we don't get repetitive
  *	and messy (meaning loads of random strings) code.
  *
  *	This also allows for a more flexible error managing as all
@@ -54,10 +54,10 @@ void errCondVarSignal(pthread_cond_t* condvar, char* message);
 /* Destroys a Condition Variable */
 void errCondVarDestroy(pthread_cond_t* condvar, char* message);
 
-/* Writes a char array to a named pipe to be read later */
+/* Writes a "string" array to a named pipe to be read later */
 void errWriteToPipe(char** sendv, int pipeDescriptor);
 
-/* Reads a char array from a named pipe, sent by the function above */
+/* Reads a "string" array from a named pipe, sent by the function above */
 void errReadFromPipe(char** readv, int pipeDescriptor, int maxBufSize);
 
 

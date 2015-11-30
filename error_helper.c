@@ -45,20 +45,27 @@ void errCondVarDestroy(pthread_cond_t* condvar, char* message){
 		defaultErrorBehavior(message);
 }
 
-/* Writes a char array to a named pipe to be read later */
+/* Writes a "string" array to a named pipe to be read later */
 void errWriteToPipe(char** sendv, int pipeDescriptor){
 	int i;
-	for(i = 0; sendv[i] != NULL; i++)
+	for(i = 0; i < 5; i++){
 		if(write(pipeDescriptor, sendv[i], sizeof(sendv[i])) == -1)
 			defaultErrorBehavior(ERR_WRITETOPIPE);
-	if(write(pipeDescriptor, NULL, sizeof(NULL)) == -1)
+		printf("wrote a %s\n", sendv[i]);
+	}
+	if(write(pipeDescriptor, "\0", sizeof("\0")) == -1)
 		defaultErrorBehavior(ERR_WRITETOPIPE);
+	printf("wrote a %s\n", sendv[i]);
 }
 
-/* Reads a char array from a named pipe, sent by the function above */
+/* Reads a "string" array from a named pipe, sent by the function above */
 void errReadFromPipe(char** readv, int pipeDescriptor, int maxBufSize){
 	int i;
-	for(i = 0; readv[i] != NULL; i++)
+	for(i = 0; i < 5; i++){
 		if(read(pipeDescriptor, readv[i], maxBufSize) == -1)
 			defaultErrorBehavior(ERR_READFROMPIPE);
+		printf("READ:%s\t%d\n", readv[i], strlen(readv[i]));
+	}
+	if(read(pipeDescriptor, readv[i], maxBufSize) == -1)
+		defaultErrorBehavior(ERR_READFROMPIPE);
 }

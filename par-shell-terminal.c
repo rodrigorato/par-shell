@@ -27,9 +27,9 @@ int main(int argc, char** argv){
 		defaultErrorBehavior(ERR_WRONGARGUMENTS);
 		exit(EXIT_FAILURE);
 	}
-	writePipe = argv[1]; 
+	writePipe = argv[1];
 	//apanhar erros
-	writePipeDescriptor = open(writePipe, O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR);
+	writePipeDescriptor = open(writePipe, O_WRONLY);
 
 	printf("par-shell@%s $ ", writePipe);
 	readLineArguments(inputVector, INPUTVECTOR_SIZE);
