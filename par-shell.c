@@ -196,7 +196,11 @@ int main(int argc, char* argv[]){
 				 */
 				char name_string[MAXFILENAMELENGTH];
 				sprintf(name_string, "par-shell-out-%d.txt", getpid());
+				
+				/* WE NEED TO CHANGE THISS */ 
 				freopen(name_string, "w", stdout); /* Does what a close() and dup() call would do in one instruction only */
+				/* WE NEED TO CHANGE THISS */ 
+
 				execv(inputVector[0], inputVector);
 				defaultErrorBehavior("Couldn't execv a program.");
 			}

@@ -2,9 +2,10 @@
 #define __ERROR_HELPER_H__
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <pthread.h>
 #include <unistd.h>
-//#include <fnctl.h>
+#include <fcntl.h>
 
 
 /**
@@ -54,10 +55,10 @@ void errCondVarSignal(pthread_cond_t* condvar, char* message);
 void errCondVarDestroy(pthread_cond_t* condvar, char* message);
 
 /* Writes a char array to a named pipe to be read later */
-void errWriteToPipe(char** sendv, FILE* pipeDescriptor);
+void errWriteToPipe(char** sendv, int pipeDescriptor);
 
 /* Reads a char array from a named pipe, sent by the function above */
-void errReadFromPipe(char** readv, FILE* pipeDescriptor, int maxBufSize);
+void errReadFromPipe(char** readv, int pipeDescriptor, int maxBufSize);
 
 
 /* DEFAULT ERROR MESSAGES DEFINITIONS: */
@@ -74,7 +75,7 @@ void errReadFromPipe(char** readv, FILE* pipeDescriptor, int maxBufSize);
 #define ERR_DESTROYCONDVAR 		"ERROR: Couldn't destroy a Condition Variable!"
 #define ERR_WRONGARGUMENTS		"ERROR: Wrong number of arguments!"
 #define ERR_WRITETOPIPE			"ERROR: Couldn't write to a pipe!"
-#define ERR_READFROM			"ERROR: Couldn't read from a pipe!"
+#define ERR_READFROMPIPE		"ERROR: Couldn't read from a pipe!"
 
 
 #endif /* __ERROR_HELPER_H__ */
