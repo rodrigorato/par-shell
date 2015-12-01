@@ -10,12 +10,6 @@ par-shell: par-shell.o list.o error_helper.o  commandlinereader.o fibonacci par-
 par-shell-terminal.o: par-shell-terminal.c
 	gcc -Wall -g -c par-shell-terminal.c
 
-test_server: test_server.o error_helper.o
-	gcc -pthread -o test_server error_helper.o test_server.o
-
-test_server.o: error_helper.o
-	gcc -Wall -g -c test_server.c
-
 par-shell.o: par-shell.c list.o
 	gcc -Wall -g -c par-shell.c
 
