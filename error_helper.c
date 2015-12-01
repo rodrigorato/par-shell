@@ -48,7 +48,7 @@ void errCondVarDestroy(pthread_cond_t* condvar, char* message){
 /* Writes a "string" array to a named pipe to be read later */
 void errWriteToPipe(char** sendv, int pipeDescriptor){
 	int i;
-	for(i = 0; i < 5; i++){
+	for(i = 0; sendv[i] != NULL; i++){
 		if(write(pipeDescriptor, sendv[i], sizeof(sendv[i])) == -1)
 			defaultErrorBehavior(ERR_WRITETOPIPE);
 		printf("wrote a %s\n", sendv[i]);
@@ -61,7 +61,7 @@ void errWriteToPipe(char** sendv, int pipeDescriptor){
 /* Reads a "string" array from a named pipe, sent by the function above */
 void errReadFromPipe(char** readv, int pipeDescriptor, int maxBufSize){
 	int i;
-	for(i = 0; i < 5; i++){
+	for(i = 0; i == 0 || strlen(readv[i]); i++){
 		if(read(pipeDescriptor, readv[i], maxBufSize) == -1)
 			defaultErrorBehavior(ERR_READFROMPIPE);
 		printf("READ:%s\t%d\n", readv[i], strlen(readv[i]));

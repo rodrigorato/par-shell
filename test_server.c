@@ -38,9 +38,9 @@ int main(){
 	    errReadFromPipe(buf, inputPipeDescriptor, MAX_BUF);
 	    // TEST
 
-	    for(i = 0; buf[i] != NULL && i < INPUTVECTOR_SIZE; i++)
+	    for(i = 0; strcmp(buf[i], "\0") && i < INPUTVECTOR_SIZE; i++)
 	    	printf("no server: %s\n", buf[i]);
-        printf("endfor\n");
+            
     	// TEST
 	}while(commandType(buf[0]) == NORMAL_COMMAND);
 
