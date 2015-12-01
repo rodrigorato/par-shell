@@ -21,12 +21,9 @@ int main(int argc, char** argv){
 	writePipeDescriptor = open(writePipe, O_WRONLY);
 
 	printf("par-shell@%s $ ", writePipe);
-	//readLineArguments(inputVector, INPUTVECTOR_SIZE);
 	while(fgets(inputVector, MAX_BUF, stdin)){
-		printf("tried to write: %s\n", inputVector);
 		errWriteToPipe(inputVector, writePipeDescriptor);
 		printf("par-shell@%s $ ", writePipe);
-		//readLineArguments(inputVector, INPUTVECTOR_SIZE);
 	}
 
 	close(writePipeDescriptor);

@@ -92,7 +92,7 @@ void *gottaWatchEmAll(void *voidList){
 
 
 int main(int argc, char* argv[]){
-	int inputPipeDescriptor, forkId, procTime = 0; // Saves fork()'s return value 
+	int i, forkId, procTime = 0; // Saves fork()'s return value 
 	pthread_t watcherThread;
 	
 	/**
@@ -100,7 +100,7 @@ int main(int argc, char* argv[]){
 	 * and dups it to stdin so we can read from it instead of stdin directly.
 	 **/
 	 mkfifo(INPUTPIPENAME, 0666);
-	 inputPipeDescriptor = open(INPUTPIPENAME, O_RDONLY);
+	 //inputPipeDescriptor = open(INPUTPIPENAME, O_RDONLY);
 	 freopen(INPUTPIPENAME, "r", stdin);
 	
 	/** 
@@ -154,11 +154,15 @@ int main(int argc, char* argv[]){
 	 **/
 
 	readLineArguments(inputVector, INPUTVECTOR_SIZE);
-	printf("read a: %s\n", inputVector[0]);
 	while(!inputVector[0] || strcmp(inputVector[0], "exit")){
 		/* If the user presses enter we just stand-by to read his input again */
 		if(inputVector[0] != NULL){
 			
+			printf("read a: %s", inputVector[0]);
+			for(i = 1; inputVector[i] != NULL; i++)
+				printf(" %s", inputVector[i]);
+			printf("\n");
+
 			/* Waits while we can't run any more processes */			
 			errMutexLock(&g_condMutex, ERR_LOCKCONDVARMUTEX);
 
@@ -220,14 +224,13 @@ int main(int argc, char* argv[]){
 		}
 
 		readLineArguments(inputVector, INPUTVECTOR_SIZE);
-		printf("read a: %s\n", inputVector[0]);
 	}
 
 	/**
 	 * Closes the named pipe used for reading inputs and unlinks it from its file
 	 **/
 	 /* APANHAR ERROS EM TODO O FUCKING SITIO */
-	 close(inputPipeDescriptor);
+	 //close(inputPipeDescriptor);
 	 unlink(INPUTPIPENAME);
 
 

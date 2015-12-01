@@ -46,11 +46,16 @@ void errCondVarDestroy(pthread_cond_t* condvar, char* message){
 }
 
 void errWriteToPipe(char* sends, int pipeDescriptor){
-	if(write(pipeDescriptor, sends, sizeof(sends)) == -1)
+	if(write(pipeDescriptor, sends, strlen(sends)) == -1)
 		defaultErrorBehavior(ERR_WRITETOPIPE);
 }
 
+/*
 void errReadFromPipe(char* reads, int pipeDescriptor, int maxBufSize){
+	printf("ERRHELPER: Trying to read\n");
 	if(read(pipeDescriptor, reads, maxBufSize) == -1)
 		defaultErrorBehavior(ERR_READFROMPIPE);
+	printf("ERRHELPER: Read %s\n", reads);
 }
+*/
+
