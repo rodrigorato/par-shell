@@ -35,4 +35,4 @@ cleanpipes:
 	rm par-shell-in
 
 clean: 
-	rm -f *.o par-shell fibonacci log.txt par-shell-out-* par-shell-terminal test_server par-shell-in
+	rm -f *.o par-shell fibonacci log.txt par-shell-out-* par-shell-terminal par-shell-in
