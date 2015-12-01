@@ -6,7 +6,7 @@
 #include "error_helper.h"
 #include "list.h"
 #include "time_helper.h"
-		
+
 
 list_t* lst_new(){
 	list_t *list;
@@ -18,8 +18,8 @@ list_t* lst_new(){
    		list->final = 0;
    		list->lst_mutex = (pthread_mutex_t*) malloc(sizeof(pthread_mutex_t));
    		if((!(list->lst_mutex)) || pthread_mutex_init(list->lst_mutex,NULL)){ // if mutex allocation or initialization failed
-			free(list->lst_mutex); free(list); list = NULL; // we undo all work previously done
-		}
+				free(list->lst_mutex); free(list); list = NULL; // we undo all work previously done
+			}
    	}
    	return list;
 }
@@ -117,9 +117,9 @@ void lst_print(list_t *list){
 	lst_iitem_t *item;
 
 	printf("\nPROCESS LIST:\n"
-		   "%-6s\t%-4s\t%-10s\t%-10s\t%-9s\t%-s\n", 
+		   "%-6s\t%-4s\t%-10s\t%-10s\t%-9s\t%-s\n",
 		   "PID", "STATUS", "START TIME", "END TIME", "DURATION", "COMMAND");
-	
+
 	item = list->first;
 	while (item != NULL){
 		printf("%-6d\t", item->pid);
@@ -134,10 +134,10 @@ void lst_print(list_t *list){
 
 		printf("%-9g\t", GET_DURATION_TIME(item->endtime,item->starttime));
 		printf("%-s\n", item->cmd);
-		
+
 		item = item->next;
 	}
-	
+
 }
 
 int lst_remove(list_t *list, int pid){
@@ -155,4 +155,12 @@ int lst_remove(list_t *list, int pid){
 		return 1;
 	}
 	return 0;
+}
+
+lst_iitem_t lst_push(list_t *list, int newPid){
+
+}
+
+lst_iitem_t lst_pp+(list_t *list){
+
 }

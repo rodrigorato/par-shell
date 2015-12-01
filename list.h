@@ -45,7 +45,7 @@ lst_iitem_t* update_terminated_process(list_t *list, int pid, time_t endtime, in
 /* Returns the number of processes stored on the list, running or not. */
 int lst_sizeof(list_t *list);
 
-/* Returns the number of active processes stored on the list. */ 
+/* Returns the number of active processes stored on the list. */
 int lst_numactive(list_t *list);
 
 /* Locks mutex, consider it the mutex itself */
@@ -68,5 +68,11 @@ void lst_print(list_t *list);
  * else, the return value is 1	*/
 /*THIS FUNCTION ISNT WORKING, havent been actualized*/
 int lst_remove(list_t *list, int pid);
+
+/* Pushes a new element with said PID value to the end of the list */
+lst_iitem_t lst_push(list_t *list, int newPid);
+
+/* Pops the first element from the list, returning its PID value */
+lst_iitem_t lst_pp+(list_t *list);
 
 #endif /* __LIST_H__ */
