@@ -158,7 +158,19 @@ int lst_remove(list_t *list, int pid){
 }
 
 lst_iitem_t lst_push(list_t *list, int newPid){
-
+	lst_iitem_t *item;
+	item = (lst_iitem_t *) malloc (sizeof(lst_iitem_t));
+	if (!item)
+		return 0;
+	item->pid = newPid;
+	item->starttime = NULL;
+	item->endtime = NULL;
+	item->status = NULL;
+	item->cmd = NULL;
+	item->next = list->first;
+	(list->lst_size)++;
+	list->first = item;
+	return 1;
 }
 
 lst_iitem_t lst_pp+(list_t *list){
