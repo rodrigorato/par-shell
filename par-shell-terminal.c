@@ -12,9 +12,10 @@
 #define EXIT_GLOBAL_COMMAND 2
 
 int specialCommand(char* command){
-	if(!strcmp(command, "exit"))
+	/* We need to add the '\n' chars because fgets puts them there */
+	if(!strcmp(command, "exit\n"))
 		return EXIT_COMMAND;
-	if(!strcmp(command, "exit-global"))
+	if(!strcmp(command, "exit-global\n"))
 		return EXIT_GLOBAL_COMMAND;
 	return NORMAL_COMMAND;
 }
@@ -31,17 +32,17 @@ int main(int argc, char** argv){
 	//apanhar erros
 	writePipeDescriptor = open(writePipe, O_WRONLY);
 
-	printf("par-shell@%s $ ", writePipe); 	
+	printf("par-shell@%s $ ", writePipe);
 	while(!specialCommand(inputString) && fgets(inputString, MAX_BUF, stdin)){
 		switch(specialCommand(inputString)){
-			case NORMAL_COMMAND: 
-				errWriteToPipe(inputString, writePipeDescriptor);
+			case NORMAL_COMMAND:
+			 	errWriteToPipe(inputString, writePipeDescriptor);
 				printf("par-shell@%s $ ", writePipe);
 				break;
-			
+
 			case EXIT_COMMAND:
 				break;
-			
+
 			case EXIT_GLOBAL_COMMAND:
 				//par-shell deve mandar matar todos os terms (Ctrl c signal?)
 				errWriteToPipe("exit", writePipeDescriptor);
