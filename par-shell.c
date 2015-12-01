@@ -92,8 +92,16 @@ void *gottaWatchEmAll(void *voidList){
 
 
 int main(int argc, char* argv[]){
-	int forkId, procTime = 0; // Saves fork()'s return value 
+	int inputPipeDescriptor, forkId, procTime = 0; // Saves fork()'s return value 
 	pthread_t watcherThread;
+	
+	/**
+	 * Initializes a named pipe, opens it (eventually locking on open)
+	 * and dups it to stdin so we can read from it instead of stdin directly.
+	 **/
+	 mkfifo(INPUTPIPENAME, 0666);
+	 inputPipeDescriptor = open(INPUTPIPENAME, O_RDONLY);
+	 freopen(INPUTPIPENAME, "r", stdin);
 	
 	/** 
 	 * Declares the vector we use to store inputs and sets all positions to NULL 
@@ -144,7 +152,9 @@ int main(int argc, char* argv[]){
 	 * it writes into the stderr stream. 
 	 * Repeats until user input is the exit command.
 	 **/
+
 	readLineArguments(inputVector, INPUTVECTOR_SIZE);
+	printf("read a: %s\n", inputVector[0]);
 	while(!inputVector[0] || strcmp(inputVector[0], "exit")){
 		/* If the user presses enter we just stand-by to read his input again */
 		if(inputVector[0] != NULL){
@@ -210,7 +220,16 @@ int main(int argc, char* argv[]){
 		}
 
 		readLineArguments(inputVector, INPUTVECTOR_SIZE);
+		printf("read a: %s\n", inputVector[0]);
 	}
+
+	/**
+	 * Closes the named pipe used for reading inputs and unlinks it from its file
+	 **/
+	 /* APANHAR ERROS EM TODO O FUCKING SITIO */
+	 close(inputPipeDescriptor);
+	 unlink(INPUTPIPENAME);
+
 
 	lst_lock(processList);
 

@@ -54,11 +54,11 @@ void errCondVarSignal(pthread_cond_t* condvar, char* message);
 /* Destroys a Condition Variable */
 void errCondVarDestroy(pthread_cond_t* condvar, char* message);
 
-/* Writes a "string" array to a named pipe to be read later */
-void errWriteToPipe(char** sendv, int pipeDescriptor);
+/* Writes a "string" to a named pipe to be read later */
+void errWriteToPipe(char* sends, int pipeDescriptor);
 
-/* Reads a "string" array from a named pipe, sent by the function above */
-void errReadFromPipe(char** readv, int pipeDescriptor, int maxBufSize);
+/* Reads a "string" from a named pipe, sent by the function above */
+void errReadFromPipe(char* reads, int pipeDescriptor, int maxBufSize);
 
 
 /* DEFAULT ERROR MESSAGES DEFINITIONS: */
