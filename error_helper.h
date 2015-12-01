@@ -7,17 +7,30 @@
 #include <unistd.h>
 #include <fcntl.h>
 
+#define PATHNAME_MAX_ARGS 5 /* Program can be ran with 5 arguments */
+#define INPUTVECTOR_SIZE PATHNAME_MAX_ARGS+2 /* vector[0] = program name; vector[-1] = NULL */
+#define MAXPAR 4 /* Set it to the number of cores in your machine. */
+#define MAX_BUF 1024 /* The communication's max buffer size */
+#define MAXLOGLINESIZE 256
+#define MAXFILENAMELENGTH 28 /* The max filename length */
+#define INPUTPIPENAME "par-shell-in" /* The input pipe's name */
+#define NORMAL_COMMAND 0
+#define EXIT_COMMAND 1
+#define EXIT_GLOBAL_COMMAND 2
 
 /**
  *	This file and corresponding .c are used
- *  to work with every function that may cause an error.
+ *  to call every function that may cause an error.
  *  As we aren't checking the errno variable for each
  *  error and the way we manage the errors is pretty simple
  *  this definitions come in handy so we don't get repetitive
- *	and messy (meaning loads of random strings) code.
+ *	and messy (random strings everywhere) code.
  *
  *	This also allows for a more flexible error managing as all
  *  the strings we print out are in one and only one place.
+ *
+ *  We also keep all the macros that are common to all the programs
+ *  in this project here, guarantees they are always the same and don't repeat.
  *
  *	ALL THESE FUNCTIONS, UNLESS SPECIFIED OTHERWISE,
  *	RUN defaultErrorBehavior() TO HANDLE ERRORS, IF THERE ARE ANY.
@@ -57,7 +70,7 @@ void errCondVarDestroy(pthread_cond_t* condvar, char* message);
 /* Writes a "string" to a named pipe to be read later */
 void errWriteToPipe(char* sends, int pipeDescriptor);
 
-/* Reads a "string" from a named pipe, sent by the function above 
+/* Reads a "string" from a named pipe, sent by the function above
 void errReadFromPipe(char* reads, int pipeDescriptor, int maxBufSize);
 */
 

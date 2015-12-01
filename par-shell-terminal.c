@@ -4,12 +4,11 @@
 #include "commandlinereader.h"
 #include "error_helper.h"
 
-#define MAX_BUF 1024 /* The communication's max buffer size */
-#define PATHNAME_MAX_ARGS 5 /* Program can be ran with 5 arguments */
-#define INPUTVECTOR_SIZE PATHNAME_MAX_ARGS+2 /* vector[0] = program name; vector[-1] = NULL */
-#define NORMAL_COMMAND 0
-#define EXIT_COMMAND 1
-#define EXIT_GLOBAL_COMMAND 2
+/**
+ *  All the macros (and error preventing functions) we use
+ *  in this program are defined in error_helper.h,
+ *  please do check that file.
+ **/
 
 int specialCommand(char* command){
 	/* We need to add the '\n' chars because fgets puts them there */
@@ -36,15 +35,17 @@ int main(int argc, char** argv){
 	while(!specialCommand(inputString) && fgets(inputString, MAX_BUF, stdin)){
 		switch(specialCommand(inputString)){
 			case NORMAL_COMMAND:
+				/* Perform a normal command - send it to par-shell so it execs it */
 			 	errWriteToPipe(inputString, writePipeDescriptor);
 				printf("par-shell@%s $ ", writePipe);
 				break;
 
 			case EXIT_COMMAND:
+				/* Perform an exit command - close this terminal program only */
 				break;
 
 			case EXIT_GLOBAL_COMMAND:
-				//par-shell deve mandar matar todos os terms (Ctrl c signal?)
+				/* Perform a exit-global command - tell par-shell to kill all terminals via signal */
 				errWriteToPipe("exit", writePipeDescriptor);
 				break;
 		}

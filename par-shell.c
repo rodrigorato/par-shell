@@ -11,12 +11,11 @@
 #include "time_helper.h"
 #include "error_helper.h"
 
-#define PATHNAME_MAX_ARGS 5 /* Program can be ran with 5 arguments */
-#define INPUTVECTOR_SIZE PATHNAME_MAX_ARGS+2 /* vector[0] = program name; vector[-1] = NULL */
-#define MAXPAR 4 /* Set it to the number of cores in your machine. */
-#define MAXLOGLINESIZE 256
-#define MAXFILENAMELENGTH 28 /* The max filename length */
-#define INPUTPIPENAME "par-shell-in" /* The input pipe's name */
+/**
+ *  All the macros (and error preventing functions) we use
+ *  in this program are defined in error_helper.h,
+ *  please do check that file.
+ **/
 
 pthread_mutex_t g_condMutex;
 pthread_cond_t g_canWaitProcess, g_canRunProcess;
@@ -30,9 +29,9 @@ void *gottaWatchEmAll(void *voidList){
 	 *	Runs in parallel with the main thread,
 	 *  waiting out on all child processes
 	 *	and keeping track of their end times,
-	 * 	while it updates the list. 
+	 * 	while it updates the list.
 	 *
-	 *	We use the list's (un)lock functions 
+	 *	We use the list's (un)lock functions
 	 *  (inner list mutex implementations)
 	 *  to read and write to it.
 	 **/
@@ -55,9 +54,9 @@ void *gottaWatchEmAll(void *voidList){
 			pthread_exit(NULL);
 		}
 		lst_unlock(processList);
-		
+
 		pid = wait(&status);
-		
+
 
 
 
@@ -81,7 +80,7 @@ void *gottaWatchEmAll(void *voidList){
 		if(!fprintf(logfile, "total execution time: %d s\n", totalExecutionTime))
 			defaultErrorBehavior("Couldn't write into the log.txt file!");
 		currentIteration++;
-	
+
 
  		if(fflush(logfile)) // guarantees the info is on the file as soon as the process ends
  			defaultErrorBehavior("Couldn't flush the log.txt file!");
@@ -92,9 +91,9 @@ void *gottaWatchEmAll(void *voidList){
 
 
 int main(int argc, char* argv[]){
-	int i, forkId, procTime = 0; // Saves fork()'s return value 
+	int i, forkId, procTime = 0; // Saves fork()'s return value
 	pthread_t watcherThread;
-	
+
 	/**
 	 * Initializes a named pipe, opens it (eventually locking on open)
 	 * and dups it to stdin so we can read from it instead of stdin directly.
@@ -102,20 +101,20 @@ int main(int argc, char* argv[]){
 	 mkfifo(INPUTPIPENAME, 0666);
 	 //inputPipeDescriptor = open(INPUTPIPENAME, O_RDONLY);
 	 freopen(INPUTPIPENAME, "r", stdin);
-	
-	/** 
-	 * Declares the vector we use to store inputs and sets all positions to NULL 
+
+	/**
+	 * Declares the vector we use to store inputs and sets all positions to NULL
 	 * 0th index is the program's name, followed by it's arguments (max 5)
-	 * The index after the last argument is set to NULL.  
+	 * The index after the last argument is set to NULL.
 	 **/
-	char* inputVector[INPUTVECTOR_SIZE] = {}, logLine1[MAXLOGLINESIZE], 
+	char* inputVector[INPUTVECTOR_SIZE] = {}, logLine1[MAXLOGLINESIZE],
 		  logLine2[MAXLOGLINESIZE], logLine3[MAXLOGLINESIZE];
 
-	/** 
+	/**
 	 * Initializes a list where we store the processes ran by the shell
 	 * along with some information about each process. (check list.h)
 	 **/
-	list_t *processList = lst_new(); 
+	list_t *processList = lst_new();
 
 	/* Open the log file for reading and appending */
 	if((logfile = fopen("log.txt", "a+")) == NULL)
@@ -149,7 +148,7 @@ int main(int argc, char* argv[]){
 	/**
 	 * Reads user input, and tries to start a process running
 	 * the user specified program. If an error is detected
-	 * it writes into the stderr stream. 
+	 * it writes into the stderr stream.
 	 * Repeats until user input is the exit command.
 	 **/
 
@@ -157,13 +156,13 @@ int main(int argc, char* argv[]){
 	while(!inputVector[0] || strcmp(inputVector[0], "exit")){
 		/* If the user presses enter we just stand-by to read his input again */
 		if(inputVector[0] != NULL){
-			
+
 			printf("read a: %s", inputVector[0]);
 			for(i = 1; inputVector[i] != NULL; i++)
 				printf(" %s", inputVector[i]);
 			printf("\n");
 
-			/* Waits while we can't run any more processes */			
+			/* Waits while we can't run any more processes */
 			errMutexLock(&g_condMutex, ERR_LOCKCONDVARMUTEX);
 
 			while(g_runningProcesses >= MAXPAR)
@@ -186,34 +185,34 @@ int main(int argc, char* argv[]){
 				 **/
 				if(!insert_new_process(processList, forkId, GET_CURRENT_TIME(), inputVector[0]))
 					defaultErrorBehavior("Can't keep track of a child process. Exiting.");
-				
+
 				/* Signals so that the monitoring thread can wait() on the ran processes. */
 				errMutexLock(&g_condMutex, ERR_LOCKCONDVARMUTEX);
 				g_runningProcesses++;
 				errCondVarSignal(&g_canWaitProcess, ERR_SIGNALCONDVAR);
 				errMutexUnlock(&g_condMutex, ERR_UNLOCKCONDVARMUTEX);
-				
+
 				free(inputVector[0]);
 			}
 			else{
 				/**
 				 * Runs the child process' code:
 				 * Tries to execute the program the user specified with respective arguments
-				 * 
+				 *
 				 * WARNING: If the program wasn't found,
 				 *		    the process exits with EXIT_FAILURE.
 				 **/
-				
-				/* 
+
+				/*
 					We will now redirect the child process's output to a file named:
 				   par-shell-out-PID.txt : PID = the child processes pid
 				 */
 				char name_string[MAXFILENAMELENGTH];
 				sprintf(name_string, "par-shell-out-%d.txt", getpid());
-				
-				/* WE NEED TO CHANGE THISS */ 
+
+				/* WE NEED TO CHANGE THISS */
 				freopen(name_string, "w", stdout); /* Does what a close() and dup() call would do in one instruction only */
-				/* WE NEED TO CHANGE THISS */ 
+				/* WE NEED TO CHANGE THISS */
 
 				execv(inputVector[0], inputVector);
 				defaultErrorBehavior("Couldn't execv a program.");
@@ -246,7 +245,7 @@ int main(int argc, char* argv[]){
 	g_runningProcesses++;
 	errCondVarSignal(&g_canWaitProcess, ERR_SIGNALCONDVAR);
 	errMutexUnlock(&g_condMutex, ERR_UNLOCKCONDVARMUTEX);
-				
+
 
 	/* Frees the last user input - the exit command */
 	free(inputVector[0]);
@@ -259,7 +258,7 @@ int main(int argc, char* argv[]){
   	errMutexDestroy(&g_condMutex, ERR_DESTROYCONDVARMUTEX);
 
   	errCondVarDestroy(&g_canWaitProcess, ERR_DESTROYCONDVAR);
- 	
+
  	errCondVarDestroy(&g_canRunProcess, ERR_DESTROYCONDVAR);
 
  	if(fclose(logfile))
