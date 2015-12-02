@@ -22,7 +22,7 @@ int specialCommand(char* command){
 int main(int argc, char** argv){
 	int writePipeDescriptor;
 	char* writePipe; /* The name of the pipe used to send commands to the par-shell "server" */
-	char inputString[MAX_BUF];
+	char inputString[MAX_BUF], buffer[MAX_BUF];
 	if(argc != 2){ /* If the number of specified arguments is incorrect, the program won't run.  */
 		defaultErrorBehavior(ERR_WRONGARGUMENTS);
 		exit(EXIT_FAILURE);
@@ -31,6 +31,9 @@ int main(int argc, char** argv){
 	//apanhar erros
 	writePipeDescriptor = open(writePipe, O_WRONLY);
 
+	/* Sends a message with this terminal's PID to the main program */
+	sprintf(buffer, "%s %d\n", NEWTERMINALID, getpid());
+	errWriteToPipe(buffer, writePipeDescriptor);
 	printf("par-shell@%s $ ", writePipe);
 	while(!specialCommand(inputString) && fgets(inputString, MAX_BUF, stdin)){
 		switch(specialCommand(inputString)){
@@ -51,8 +54,8 @@ int main(int argc, char** argv){
 		}
 	}
 
+	sprintf(buffer, "%s %d\n", CLOSINGTERMINAL, getpid());
+	errWriteToPipe(buffer, writePipeDescriptor);
 	close(writePipeDescriptor);
-	/* Handle different exit commands */
-
 	return 0;
 }

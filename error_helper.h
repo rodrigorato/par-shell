@@ -14,9 +14,12 @@
 #define MAXLOGLINESIZE 256
 #define MAXFILENAMELENGTH 28 /* The max filename length */
 #define INPUTPIPENAME "par-shell-in" /* The input pipe's name */
+#define NEWTERMINALID "new_terminal_pid"
+#define CLOSINGTERMINAL "closing_terminal_pid"
 #define NORMAL_COMMAND 0
 #define EXIT_COMMAND 1
-#define EXIT_GLOBAL_COMMAND 2
+#define EXIT_GLOBAL_COMMAND 2 
+
 
 /**
  *	This file and corresponding .c are used

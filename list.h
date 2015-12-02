@@ -66,13 +66,15 @@ void lst_print(list_t *list);
 /* Removes the process with that pid from the list
  * Return value is 0 if the process wasn't found
  * else, the return value is 1	*/
-/*THIS FUNCTION ISNT WORKING, havent been actualized*/
 int lst_remove(list_t *list, int pid);
 
+
 /* Pushes a new element with said PID value to the end of the list */
-lst_iitem_t lst_push(list_t *list, int newPid);
+/* Returns 0 on error, 1 otherwise */
+int lst_push(list_t *list, int newPid);
 
 /* Pops the first element from the list, returning its PID value */
-lst_iitem_t lst_pp+(list_t *list);
+/* Returns 0 on error, a pid otherwise */
+int lst_pop(list_t *list);
 
 #endif /* __LIST_H__ */

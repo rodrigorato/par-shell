@@ -141,7 +141,6 @@ void lst_print(list_t *list){
 }
 
 int lst_remove(list_t *list, int pid){
-	/*THIS FUNCTION ISNT WORKING, havent been actualized*/
 	lst_iitem_t *temp = list->first, *aux=NULL;
 	for(; temp && temp->pid != pid; aux=temp, temp=temp->next);
 	if(temp){
@@ -149,30 +148,43 @@ int lst_remove(list_t *list, int pid){
 			list->first = (list->first)->next;
 		else
 			aux->next=temp->next;
-		free(temp->cmd);
 		free(temp);
-		list->lst_size--;
+		(list->lst_size)--;
 		return 1;
 	}
 	return 0;
 }
 
-lst_iitem_t lst_push(list_t *list, int newPid){
+
+int lst_push(list_t *list, int newPid){
 	lst_iitem_t *item;
 	item = (lst_iitem_t *) malloc (sizeof(lst_iitem_t));
 	if (!item)
 		return 0;
 	item->pid = newPid;
-	item->starttime = NULL;
-	item->endtime = NULL;
-	item->status = NULL;
-	item->cmd = NULL;
+	item->starttime = (time_t)NULL;
+	item->endtime = (time_t)NULL;
+	item->status = 0;
+	item->cmd = (char*)NULL;
 	item->next = list->first;
 	(list->lst_size)++;
 	list->first = item;
 	return 1;
 }
 
-lst_iitem_t lst_pp+(list_t *list){
+int lst_pop(list_t *list){
+	int pid;
+	lst_iitem_t *item;
+	if(!list) 
+		return 0;
+	
+	item = list->first;
+	if(!item) 
+		return 0;
 
+	pid = item->pid;
+	list->first = item->next;
+	free(item);
+	return pid;
 }
+

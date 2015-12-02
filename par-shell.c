@@ -115,6 +115,7 @@ int main(int argc, char* argv[]){
 	 * along with some information about each process. (check list.h)
 	 **/
 	list_t *processList = lst_new();
+	list_t *terminalList = lst_new();
 
 	/* Open the log file for reading and appending */
 	if((logfile = fopen("log.txt", "a+")) == NULL)
@@ -151,9 +152,25 @@ int main(int argc, char* argv[]){
 	 * it writes into the stderr stream.
 	 * Repeats until user input is the exit command.
 	 **/
-
 	readLineArguments(inputVector, INPUTVECTOR_SIZE);
 	while(!inputVector[0] || strcmp(inputVector[0], "exit")){
+		if(inputVector[0] && !strcmp(inputVector[0], NEWTERMINALID)){
+			if(!lst_push(terminalList, atoi(inputVector[1])))
+				defaultErrorBehavior("ERROR: Couldn't push an element to the list!");
+			printf("new terminal %d\n", atoi(inputVector[1]));
+			inputVector[0] = NULL; /* Prevents it from trying to exec this command */
+		}
+
+		if(inputVector[0] && !strcmp(inputVector[0], CLOSINGTERMINAL)){
+			if(!lst_remove(terminalList, atoi(inputVector[1])))
+				defaultErrorBehavior("ERROR: Couldn't remove an element from the list!");
+			printf("removed %d\n", atoi(inputVector[1]));
+			if(lst_sizeof(terminalList) == 0)
+				readLineArguments(inputVector, INPUTVECTOR_SIZE);
+			inputVector[0] = NULL; /* Prevents it from trying to exec this command */
+		}
+
+
 		/* If the user presses enter we just stand-by to read his input again */
 		if(inputVector[0] != NULL){
 
