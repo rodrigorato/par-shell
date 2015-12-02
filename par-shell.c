@@ -91,7 +91,7 @@ void *gottaWatchEmAll(void *voidList){
 
 
 int main(int argc, char* argv[]){
-	int inputPipeDescriptor, i, forkId, procTime = 0; // Saves fork()'s return value
+	int inputPipeDescriptor, outputFileDescriptor, i, forkId, procTime = 0; // Saves fork()'s return value
 	pthread_t watcherThread;
 
 	/**
@@ -99,14 +99,12 @@ int main(int argc, char* argv[]){
 	 * and dups it to stdin so we can read from it instead of stdin directly.
 	 **/
 	 mkfifo(INPUTPIPENAME, 0666);
-	 //inputPipeDescriptor = open(INPUTPIPENAME, O_RDONLY);
-	 freopen(INPUTPIPENAME, "r", stdin);
-	 /*
+
 	 inputPipeDescriptor = open(INPUTPIPENAME, O_RDONLY);
-	 close(stdin);
+	 close(fileno(stdin));
 	 dup(inputPipeDescriptor);
 	 close(inputPipeDescriptor);
-	 */
+	 
 	/**
 	 * Declares the vector we use to store inputs and sets all positions to NULL
 	 * 0th index is the program's name, followed by it's arguments (max 5)
@@ -234,9 +232,10 @@ int main(int argc, char* argv[]){
 				char name_string[MAXFILENAMELENGTH];
 				sprintf(name_string, "par-shell-out-%d.txt", getpid());
 
-				/* WE NEED TO CHANGE THISS */
-				freopen(name_string, "w", stdout); /* Does what a close() and dup() call would do in one instruction only */
-				/* WE NEED TO CHANGE THISS */
+				outputFileDescriptor = open(name_string, O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR);
+	 			close(fileno(stdout));
+	 			dup(outputFileDescriptor);
+	 			close(outputFileDescriptor);
 
 				execv(inputVector[0], inputVector);
 				defaultErrorBehavior("Couldn't execv a program.");
