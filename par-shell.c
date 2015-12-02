@@ -159,7 +159,6 @@ int main(int argc, char* argv[]){
 	 **/
 	processList = lst_new();
 	terminalList = lst_new();
-	signal(SIGINT, killAllTerminals);
 
 	/**
 	 * Initializes a named pipe, opens it (eventually locking on open)
@@ -211,6 +210,8 @@ int main(int argc, char* argv[]){
 	/* Tries to create the thread that will keep track of childs */
 	if(pthread_create(&watcherThread, 0, gottaWatchEmAll,(void *)processList))
 		defaultErrorBehavior("Couldn't start a watcher thread."); // See error_helper.h
+	
+	signal(SIGINT, killAllTerminals);
 
 	/**
 	 * Reads user input, and tries to start a process running
