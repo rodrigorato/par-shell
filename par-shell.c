@@ -91,7 +91,7 @@ void *gottaWatchEmAll(void *voidList){
 
 
 int main(int argc, char* argv[]){
-	int i, forkId, procTime = 0; // Saves fork()'s return value
+	int inputPipeDescriptor, i, forkId, procTime = 0; // Saves fork()'s return value
 	pthread_t watcherThread;
 
 	/**
@@ -101,7 +101,12 @@ int main(int argc, char* argv[]){
 	 mkfifo(INPUTPIPENAME, 0666);
 	 //inputPipeDescriptor = open(INPUTPIPENAME, O_RDONLY);
 	 freopen(INPUTPIPENAME, "r", stdin);
-
+	 /*
+	 inputPipeDescriptor = open(INPUTPIPENAME, O_RDONLY);
+	 close(stdin);
+	 dup(inputPipeDescriptor);
+	 close(inputPipeDescriptor);
+	 */
 	/**
 	 * Declares the vector we use to store inputs and sets all positions to NULL
 	 * 0th index is the program's name, followed by it's arguments (max 5)
@@ -165,8 +170,10 @@ int main(int argc, char* argv[]){
 			if(!lst_remove(terminalList, atoi(inputVector[1])))
 				defaultErrorBehavior("ERROR: Couldn't remove an element from the list!");
 			printf("removed %d\n", atoi(inputVector[1]));
-			if(lst_sizeof(terminalList) == 0)
+			if(lst_sizeof(terminalList) == 0){
 				readLineArguments(inputVector, INPUTVECTOR_SIZE);
+				printf("NAO BLOQUEOU!!!\n");
+			}
 			inputVector[0] = NULL; /* Prevents it from trying to exec this command */
 		}
 

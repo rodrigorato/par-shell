@@ -13,7 +13,7 @@
 #define MAX_BUF 1024 /* The communication's max buffer size */
 #define MAXLOGLINESIZE 256
 #define MAXFILENAMELENGTH 28 /* The max filename length */
-#define INPUTPIPENAME "par-shell-in" /* The input pipe's name */
+#define INPUTPIPENAME "/tmp/par-shell-in" /* The input pipe's name */
 #define NEWTERMINALID "new_terminal_pid"
 #define CLOSINGTERMINAL "closing_terminal_pid"
 #define NORMAL_COMMAND 0
