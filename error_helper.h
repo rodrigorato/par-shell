@@ -16,9 +16,12 @@
 #define INPUTPIPENAME "/tmp/par-shell-in" /* The input pipe's name */
 #define NEWTERMINALID "new_terminal_pid"
 #define CLOSINGTERMINAL "closing_terminal_pid"
+#define TERMINALSTATS "stats_terminal_pid"
+#define STATSDIR "/tmp/"
 #define NORMAL_COMMAND 0
 #define EXIT_COMMAND 1
 #define EXIT_GLOBAL_COMMAND 2 
+#define STATS_COMMAND 3
 
 
 /**
