@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h> 
 #include "commandlinereader.h"
 #include "error_helper.h"
 
@@ -23,8 +24,9 @@ int specialCommand(char* command){
 
 int main(int argc, char** argv){
 	int writePipeDescriptor, statsFileDescriptor;
+	int totalExecTime, numActiveProcs;
 	char* writePipe; /* The name of the pipe used to send commands to the par-shell "server" */
-	char inputString[MAX_BUF], buffer[MAX_BUF];
+	char inputString[MAX_BUF], buffer[MAX_BUF], message[MAX_BUF];
 	if(argc != 2){ /* If the number of specified arguments is incorrect, the program won't run.  */
 		defaultErrorBehavior(ERR_WRONGARGUMENTS);
 		exit(EXIT_FAILURE);
@@ -37,7 +39,7 @@ int main(int argc, char** argv){
 	sprintf(buffer, "%s %d\n", NEWTERMINALID, getpid());
 	errWriteToPipe(buffer, writePipeDescriptor);
 	printf("par-shell@%s $ ", writePipe);
-	while(!specialCommand(inputString) && fgets(inputString, MAX_BUF, stdin)){
+	while((!specialCommand(inputString) || specialCommand(inputString) == STATS_COMMAND) && fgets(inputString, MAX_BUF, stdin)){
 		switch(specialCommand(inputString)){
 			case NORMAL_COMMAND:
 				/* Perform a normal command - send it to par-shell so it execs it */
@@ -49,8 +51,14 @@ int main(int argc, char** argv){
 				sprintf(buffer, "%s %d\n", TERMINALSTATS, getpid());
 				errWriteToPipe(buffer, writePipeDescriptor);
 				sprintf(buffer, "%s%s%d", STATSDIR, TERMINALSTATS, getpid());
+				mkfifo(buffer, 0666);
 				statsFileDescriptor = open(buffer, O_RDONLY);
-				
+				errReadFromPipe(message, statsFileDescriptor, MAX_BUF);
+				printf("--PAR-SHELL STATS--\n");
+				printf("%s\n", message);
+				close(statsFileDescriptor);
+				unlink(buffer);			
+				printf("par-shell@%s $ ", writePipe);	
 				break;
 
 			case EXIT_COMMAND:

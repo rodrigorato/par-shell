@@ -50,12 +50,12 @@ void errWriteToPipe(char* sends, int pipeDescriptor){
 		defaultErrorBehavior(ERR_WRITETOPIPE);
 }
 
-/*
+
 void errReadFromPipe(char* reads, int pipeDescriptor, int maxBufSize){
-	printf("ERRHELPER: Trying to read\n");
-	if(read(pipeDescriptor, reads, maxBufSize) == -1)
+	int readChars = 0;
+	if((readChars = read(pipeDescriptor, reads, maxBufSize)) == -1)
 		defaultErrorBehavior(ERR_READFROMPIPE);
-	printf("ERRHELPER: Read %s\n", reads);
+	reads[readChars] = '\0';
 }
-*/
+
 

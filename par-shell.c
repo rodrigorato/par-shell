@@ -25,6 +25,7 @@ FILE* logfile;
 list_t *terminalList;
 list_t *processList;
 pthread_t watcherThread;
+pthread_t statsThread;
 
 
 void *gottaWatchEmAll(void *voidList){
@@ -93,6 +94,23 @@ void *gottaWatchEmAll(void *voidList){
 	}
 }
 
+void* terminalSendStats(void* voidTerminalPid){
+	int statsFileDescriptor, *terminalPid = (int*) voidTerminalPid;
+	int numActive, execTime;
+	char filename[MAX_BUF], message[MAX_BUF];
+	sprintf(filename, "%s%s%d", STATSDIR, TERMINALSTATS, *terminalPid);
+	statsFileDescriptor = open(filename, O_WRONLY);
+	lst_lock(processList);
+	execTime = totalExecutionTime;
+	numActive = lst_numactive(processList);
+	lst_unlock(processList);
+	printf("sending %d %d\n", numActive, execTime);
+	sprintf(message, "Active processes count: %d\nTotal execution time: %d", numActive, execTime);
+	errWriteToPipe(message, statsFileDescriptor);
+	close(statsFileDescriptor);
+	pthread_exit(NULL);
+}
+
 /* Kills all running terminals and deallocates all the memory for the list */
 void killAllTerminals(int s){
 	int pid;
@@ -150,7 +168,6 @@ void killAllTerminals(int s){
 
 int main(int argc, char* argv[]){
 	int inputPipeDescriptor, outputFileDescriptor, stdinRedirect, i, forkId, procTime = 0; // Saves fork()'s return value
-	
 
 	/* very important comment */
 	/**
@@ -241,6 +258,14 @@ int main(int argc, char* argv[]){
 			}
 			inputVector[0] = NULL; /* Prevents it from trying to exec this command */
 		}
+
+		if(inputVector[0] && !strcmp(inputVector[0], TERMINALSTATS)){
+			i = atoi(inputVector[1]);
+			if(pthread_create(&statsThread, 0, terminalSendStats, (void*) &i))
+				defaultErrorBehavior("Couldn't start a stats writer thread."); 
+			inputVector[0] = NULL;
+		}
+
 
 
 		/* If the user presses enter we just stand-by to read his input again */

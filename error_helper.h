@@ -76,9 +76,9 @@ void errCondVarDestroy(pthread_cond_t* condvar, char* message);
 /* Writes a "string" to a named pipe to be read later */
 void errWriteToPipe(char* sends, int pipeDescriptor);
 
-/* Reads a "string" from a named pipe, sent by the function above
+/* Reads a "string" from a named pipe, sent by the function above */
 void errReadFromPipe(char* reads, int pipeDescriptor, int maxBufSize);
-*/
+
 
 /* DEFAULT ERROR MESSAGES DEFINITIONS: */
 #define ERR_DESTROYMUTEX 		"ERROR: Couldn't destroy a Mutex!"
