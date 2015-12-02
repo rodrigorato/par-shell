@@ -98,7 +98,7 @@ void killAllTerminals(int s){
 	int pid;
 	while((pid = lst_pop(terminalList)))
 		kill(pid, SIGKILL); // catch
-	if(lst_sizeof(terminalList) != 0) lst_destroy(terminalList);
+	lst_destroy(terminalList);
 	
 	/**
 	 * Closes the named pipe used for reading inputs and unlinks it from its file
@@ -149,7 +149,7 @@ void killAllTerminals(int s){
 
 
 int main(int argc, char* argv[]){
-	int inputPipeDescriptor, outputFileDescriptor, i, forkId, procTime = 0; // Saves fork()'s return value
+	int inputPipeDescriptor, outputFileDescriptor, stdinRedirect, i, forkId, procTime = 0; // Saves fork()'s return value
 	
 
 	/* very important comment */
@@ -160,16 +160,6 @@ int main(int argc, char* argv[]){
 	processList = lst_new();
 	terminalList = lst_new();
 
-	/**
-	 * Initializes a named pipe, opens it (eventually locking on open)
-	 * and dups it to stdin so we can read from it instead of stdin directly.
-	 **/
-	 mkfifo(INPUTPIPENAME, 0666);
-
-	 inputPipeDescriptor = open(INPUTPIPENAME, O_RDONLY);
-	 close(fileno(stdin));
-	 dup(inputPipeDescriptor);
-	 close(inputPipeDescriptor);
 	 
 	/**
 	 * Declares the vector we use to store inputs and sets all positions to NULL
@@ -210,8 +200,19 @@ int main(int argc, char* argv[]){
 	/* Tries to create the thread that will keep track of childs */
 	if(pthread_create(&watcherThread, 0, gottaWatchEmAll,(void *)processList))
 		defaultErrorBehavior("Couldn't start a watcher thread."); // See error_helper.h
-	
+
 	signal(SIGINT, killAllTerminals);
+
+	/**
+	 * Initializes a named pipe, opens it (eventually locking on open)
+	 * and dups it to stdin so we can read from it instead of stdin directly.
+	 **/
+	 mkfifo(INPUTPIPENAME, 0666);
+
+	 inputPipeDescriptor = open(INPUTPIPENAME, O_RDONLY);
+	 close(fileno(stdin));
+	 stdinRedirect = dup(inputPipeDescriptor);
+	 close(inputPipeDescriptor);
 
 	/**
 	 * Reads user input, and tries to start a process running
@@ -233,8 +234,10 @@ int main(int argc, char* argv[]){
 				defaultErrorBehavior("ERROR: Couldn't remove an element from the list!");
 			printf("removed %d\n", atoi(inputVector[1]));
 			if(lst_sizeof(terminalList) == 0){
-				readLineArguments(inputVector, INPUTVECTOR_SIZE);
-				printf("NAO BLOQUEOU!!!\n");
+				inputPipeDescriptor = open(INPUTPIPENAME, O_RDONLY);
+				close(stdinRedirect);
+				stdinRedirect = dup(inputPipeDescriptor);
+				close(inputPipeDescriptor);
 			}
 			inputVector[0] = NULL; /* Prevents it from trying to exec this command */
 		}
