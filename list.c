@@ -30,17 +30,19 @@ void lst_destroy(list_t *list){
 	item = list->first;
 	while (item != NULL){
 		nextitem = item->next;
-		free(item->cmd);
+		//free(item->cmd);
 		free(item);
 		item = nextitem;
   	}
 
   	/* As soon as the mutex is unlocked the list is destroyed */
-  	while(pthread_mutex_trylock(list->lst_mutex));
-  	errMutexUnlock(list->lst_mutex, ERR_UNLOCKMUTEX);
-  	errMutexDestroy(list->lst_mutex, ERR_DESTROYMUTEX);
-  	free(list->lst_mutex);
-	free(list);
+  	if(list->lst_mutex){
+  		while(pthread_mutex_trylock(list->lst_mutex));
+  		errMutexUnlock(list->lst_mutex, ERR_UNLOCKMUTEX);
+  		errMutexDestroy(list->lst_mutex, ERR_DESTROYMUTEX);
+  		free(list->lst_mutex);
+		free(list);
+	}
 }
 
 

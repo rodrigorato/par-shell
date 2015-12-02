@@ -49,7 +49,7 @@ int main(int argc, char** argv){
 
 			case EXIT_GLOBAL_COMMAND:
 				/* Perform a exit-global command - tell par-shell to kill all terminals via signal */
-				errWriteToPipe("exit", writePipeDescriptor);
+				errWriteToPipe("exit\n", writePipeDescriptor);
 				break;
 		}
 	}

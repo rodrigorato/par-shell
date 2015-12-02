@@ -22,6 +22,10 @@ pthread_cond_t g_canWaitProcess, g_canRunProcess;
 int g_runningProcesses = 0, totalExecutionTime = 0;
 int currentIteration = -1; // we start at iteration0;
 FILE* logfile;
+list_t *terminalList;
+list_t *processList;
+pthread_t watcherThread;
+
 
 void *gottaWatchEmAll(void *voidList){
 	/**
@@ -89,10 +93,73 @@ void *gottaWatchEmAll(void *voidList){
 	}
 }
 
+/* Kills all running terminals and deallocates all the memory for the list */
+void killAllTerminals(int s){
+	int pid;
+	while((pid = lst_pop(terminalList)))
+		kill(pid, SIGKILL); // catch
+	if(lst_sizeof(terminalList) != 0) lst_destroy(terminalList);
+	
+	/**
+	 * Closes the named pipe used for reading inputs and unlinks it from its file
+	 **/
+	 /* APANHAR ERROS EM TODO O FUCKING SITIO */
+	 //close(inputPipeDescriptor);
+	 unlink(INPUTPIPENAME);
+
+
+	lst_lock(processList);
+
+	/* Commands to finalize list*/
+	lst_finalize(processList);
+
+	lst_unlock(processList);
+
+	/* We post one last time so the thread can get to pthread_exit*/
+	errMutexLock(&g_condMutex, ERR_LOCKCONDVARMUTEX);
+	g_runningProcesses++;
+	errCondVarSignal(&g_canWaitProcess, ERR_SIGNALCONDVAR);
+	errMutexUnlock(&g_condMutex, ERR_UNLOCKCONDVARMUTEX);
+
+
+	/* Frees the last user input - the exit command */
+	//free(inputVector[0]);
+
+	if(pthread_join(watcherThread, NULL))
+		defaultErrorBehavior("Error on pthread_join().");
+
+	while(pthread_mutex_trylock(&g_condMutex)); //will lock on trylock failure
+  	errMutexUnlock(&g_condMutex, ERR_UNLOCKCONDVARMUTEX);
+  	errMutexDestroy(&g_condMutex, ERR_DESTROYCONDVARMUTEX);
+
+  	errCondVarDestroy(&g_canWaitProcess, ERR_DESTROYCONDVAR);
+
+ 	errCondVarDestroy(&g_canRunProcess, ERR_DESTROYCONDVAR);
+
+ 	if(fclose(logfile))
+ 		defaultErrorBehavior("Couldn't close the log.txt file!");
+
+	/* Prints info about every child process to the user */
+	lst_print(processList);
+
+	/* Deallocates all memory for the process list. */
+	lst_destroy(processList);
+	exit(EXIT_SUCCESS);
+}
+
 
 int main(int argc, char* argv[]){
 	int inputPipeDescriptor, outputFileDescriptor, i, forkId, procTime = 0; // Saves fork()'s return value
-	pthread_t watcherThread;
+	
+
+	/* very important comment */
+	/**
+	 * Initializes a list where we store the processes ran by the shell
+	 * along with some information about each process. (check list.h)
+	 **/
+	processList = lst_new();
+	terminalList = lst_new();
+	signal(SIGINT, killAllTerminals);
 
 	/**
 	 * Initializes a named pipe, opens it (eventually locking on open)
@@ -113,12 +180,8 @@ int main(int argc, char* argv[]){
 	char* inputVector[INPUTVECTOR_SIZE] = {}, logLine1[MAXLOGLINESIZE],
 		  logLine2[MAXLOGLINESIZE], logLine3[MAXLOGLINESIZE];
 
-	/**
-	 * Initializes a list where we store the processes ran by the shell
-	 * along with some information about each process. (check list.h)
-	 **/
-	list_t *processList = lst_new();
-	list_t *terminalList = lst_new();
+	
+	
 
 	/* Open the log file for reading and appending */
 	if((logfile = fopen("log.txt", "a+")) == NULL)
@@ -248,50 +311,7 @@ int main(int argc, char* argv[]){
 		readLineArguments(inputVector, INPUTVECTOR_SIZE);
 	}
 
-	/**
-	 * Closes the named pipe used for reading inputs and unlinks it from its file
-	 **/
-	 /* APANHAR ERROS EM TODO O FUCKING SITIO */
-	 //close(inputPipeDescriptor);
-	 unlink(INPUTPIPENAME);
-
-
-	lst_lock(processList);
-
-	/* Commands to finalize list*/
-	lst_finalize(processList);
-
-	lst_unlock(processList);
-
-	/* We post one last time so the thread can get to pthread_exit*/
-	errMutexLock(&g_condMutex, ERR_LOCKCONDVARMUTEX);
-	g_runningProcesses++;
-	errCondVarSignal(&g_canWaitProcess, ERR_SIGNALCONDVAR);
-	errMutexUnlock(&g_condMutex, ERR_UNLOCKCONDVARMUTEX);
-
-
-	/* Frees the last user input - the exit command */
-	free(inputVector[0]);
-
-	if(pthread_join(watcherThread, NULL))
-		defaultErrorBehavior("Error on pthread_join().");
-
-	while(pthread_mutex_trylock(&g_condMutex)); //will lock on trylock failure
-  	errMutexUnlock(&g_condMutex, ERR_UNLOCKCONDVARMUTEX);
-  	errMutexDestroy(&g_condMutex, ERR_DESTROYCONDVARMUTEX);
-
-  	errCondVarDestroy(&g_canWaitProcess, ERR_DESTROYCONDVAR);
-
- 	errCondVarDestroy(&g_canRunProcess, ERR_DESTROYCONDVAR);
-
- 	if(fclose(logfile))
- 		defaultErrorBehavior("Couldn't close the log.txt file!");
-
-	/* Prints info about every child process to the user */
-	lst_print(processList);
-
-	/* Deallocates all memory for the process list. */
-	lst_destroy(processList);
+	killAllTerminals(0);
 
 	return 0;
 }
