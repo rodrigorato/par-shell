@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h> 
+#include <signal.h>
 #include "commandlinereader.h"
 #include "error_helper.h"
 
@@ -10,6 +11,16 @@
  *  in this program are defined in error_helper.h,
  *  please do check that file.
  **/
+
+int writePipeDescriptor, statsFileDescriptor;
+
+void interruptionExit(int s){
+	char buffer[MAX_BUF];
+	sprintf(buffer, "%s %d\n", CLOSINGTERMINAL, getpid());
+	errWriteToPipe(buffer, writePipeDescriptor);
+	close(writePipeDescriptor);
+	exit(EXIT_SUCCESS);
+}
 
 int specialCommand(char* command){
 	/* We need to add the '\n' chars because fgets puts them there */
@@ -23,8 +34,6 @@ int specialCommand(char* command){
 }
 
 int main(int argc, char** argv){
-	int writePipeDescriptor, statsFileDescriptor;
-	int totalExecTime, numActiveProcs;
 	char* writePipe; /* The name of the pipe used to send commands to the par-shell "server" */
 	char inputString[MAX_BUF], buffer[MAX_BUF], message[MAX_BUF];
 	if(argc != 2){ /* If the number of specified arguments is incorrect, the program won't run.  */
@@ -34,6 +43,7 @@ int main(int argc, char** argv){
 	writePipe = argv[1];
 	//apanhar erros
 	writePipeDescriptor = open(writePipe, O_WRONLY);
+	signal(SIGINT, interruptionExit);
 
 	/* Sends a message with this terminal's PID to the main program */
 	sprintf(buffer, "%s %d\n", NEWTERMINALID, getpid());
@@ -72,8 +82,5 @@ int main(int argc, char** argv){
 		}
 	}
 
-	sprintf(buffer, "%s %d\n", CLOSINGTERMINAL, getpid());
-	errWriteToPipe(buffer, writePipeDescriptor);
-	close(writePipeDescriptor);
-	return 0;
+	interruptionExit(0);
 }
