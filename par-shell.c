@@ -315,12 +315,11 @@ int main(int argc, char* argv[]){
 		/* If any of the terminals presses enter we just stand-by to read input again */
 		if(inputVector[0] != NULL){
 
-			/* DEBUGGING USE
+			/* Prints what was read and his arguments */
 			printf("read a: %s", inputVector[0]);
 			for(i = 1; inputVector[i] != NULL; i++)
 				printf(" %s", inputVector[i]);
 			printf("\n");
-			*/
 
 			/* Waits while we can't run any more processes */
 			errMutexLock(&g_condMutex, ERR_LOCKCONDVARMUTEX);
