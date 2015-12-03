@@ -37,18 +37,15 @@ char* inputVector[INPUTVECTOR_SIZE] = {};
 
 void writeStats(){
 	int runningProcesses, execTime;
-	if((statsfile = fopen(STATSFILE, "w")) == NULL)
-		defaultErrorBehavior("FIXME");
+	statsfile = errFOpen(STATSFILE, "w");
 	errMutexLock(&g_condMutex, ERR_LOCKMUTEX);
 	runningProcesses = g_runningProcesses;
 	execTime = totalExecutionTime;
 	errMutexUnlock(&g_condMutex,ERR_UNLOCKMUTEX);
 	if(!fprintf(statsfile, "Active processes count: \t%d\nTotal execution time: \t\t%d\n", runningProcesses, execTime))
-		defaultErrorBehavior("");
- 	if(fflush(statsfile))
- 		defaultErrorBehavior("Couldn't flush the log.txt file!");
- 	if(fclose(statsfile))
- 		defaultErrorBehavior("FIXME");
+		defaultErrorBehavior(ERR_WRITETOFILE);
+ 	errFflush(statsfile);
+ 	errFClose(statsfile);
 }
 
 void *gottaWatchEmAll(void *voidList){
@@ -102,18 +99,17 @@ void *gottaWatchEmAll(void *voidList){
 
 		/* Writting the information into the log, if any couldnt write , the program ends. */
 		if(!fprintf(logfile, "iteracao %d\n", currentIteration))
-				defaultErrorBehavior("Couldn't write into the log.txt file!");
+				defaultErrorBehavior(ERR_WRITETOFILE);
 		if(!fprintf(logfile, "pid: %d execution time %d s\n", pid, i))
-				defaultErrorBehavior("Couldn't write into the log.txt file!");
+				defaultErrorBehavior(ERR_WRITETOFILE);
 		if(!fprintf(logfile, "total execution time: %d s\n", totalExecutionTime))
-			defaultErrorBehavior("Couldn't write into the log.txt file!");
+			defaultErrorBehavior(ERR_WRITETOFILE);
 
 		/* Guarantees the info is on the file as soon as the process ends */
- 		if(fflush(logfile))
- 			defaultErrorBehavior("Couldn't flush the log.txt file!");
+ 		errFflush(logfile);
 
-		writeStats();
 		currentIteration++;
+		writeStats();
 	}
 }
 
@@ -134,9 +130,7 @@ void killAllTerminals(int s){
 	free(inputVector[0]);
 	
 	/* Unlinks the named pipe used for reading inputs */
-	if(unlink(INPUTPIPENAME))
-		defaultErrorBehavior("There was a problem unlinking the par-shell pipe!");
-
+	errUnlink(INPUTPIPENAME);
 
 	/* Commands to finalize list*/
 	lst_lock(processList);
@@ -151,7 +145,7 @@ void killAllTerminals(int s){
 
 	/* Waiting on watcherThread to end */
 	if(pthread_join(watcherThread, NULL))
-		defaultErrorBehavior("Error on pthread_join().");
+		defaultErrorBehavior(ERR_THREADJOIN);
 
 	/* Destroying mutex and Condition Variables */
 	while(pthread_mutex_trylock(&g_condMutex));
@@ -161,11 +155,9 @@ void killAllTerminals(int s){
  	errCondVarDestroy(&g_canRunProcess, ERR_DESTROYCONDVAR);
 
  	/* Closing the log file */
- 	if(fclose(logfile))
- 		defaultErrorBehavior("Couldn't close the log.txt file!");
+ 	errFClose(logfile);
 	
-	if(unlink(STATSFILE))
-		defaultErrorBehavior("FIXME");
+	errUnlink(STATSFILE);
 
 	/* Prints info about every child process to the user */
 	lst_print(processList);
@@ -188,9 +180,9 @@ int main(int argc, char* argv[]){
 
 	/* Verifies if the lists were sucessfully initiated */
 	if(!processList)
-		defaultErrorBehavior("Couldn't create an instance of a list!");
+		defaultErrorBehavior(ERR_ALLOCLIST);
 	if(!terminalList)
-		defaultErrorBehavior("Couldn't create an instance of a list!");
+		defaultErrorBehavior(ERR_ALLOCLIST);
 
 	/**
 	 *	Here we declare 3 log lines so we can read the log file.
@@ -198,8 +190,7 @@ int main(int argc, char* argv[]){
 	char logLine1[MAXLOGLINESIZE], logLine2[MAXLOGLINESIZE], logLine3[MAXLOGLINESIZE];
 
 	/* Open the log file for reading and appending */
-	if((logfile = fopen("log.txt", "a+")) == NULL)
-		defaultErrorBehavior("Couldn't open the log.txt file!");
+	logfile = errFOpen("log.txt", "a+");
 
 	/*gets current iteration and total execution time from the file and changes in our variables*/
 	while(fgets(logLine1, MAXLOGLINESIZE, logfile) &&
@@ -221,30 +212,25 @@ int main(int argc, char* argv[]){
 
 	/* Tries to create the thread that will keep track of childs */
 	if(pthread_create(&watcherThread, 0, gottaWatchEmAll,(void *)processList))
-		defaultErrorBehavior("Couldn't start a watcher thread.");
+		defaultErrorBehavior(ERR_WATCHERTHREADCREATE);
 
 	/* At this moment, if a SIGINT is received, this will proceed to exit normally */
-	if((signal(SIGINT, killAllTerminals)) == SIG_ERR)
-		defaultErrorBehavior("There was a problem changing the signal handler from SIGINT!");
+	errSignal(SIGINT, killAllTerminals);
 
 	/**
 	 * Initializes a named pipe, opens it (eventually locking on open)
 	 * and dups it to stdin so we can read from it instead of stdin directly.
 	 **/
 	if(mkfifo(INPUTPIPENAME, 0666))
-		defaultErrorBehavior("There was a problem making the par-shell pipe!");
+		defaultErrorBehavior(ERR_MKFIFO);
 
 	/* Tries to open the communication pipe */
 	inputPipeDescriptor = errOpen(INPUTPIPENAME, O_RDONLY);
 
 	/* Redirection of stdin to the pipe, by closing stdin and duplicating the open pipe */
-	if(close(fileno(stdin)))
-		defaultErrorBehavior("There was a problem closing stdin!");
-	stdinRedirect = dup(inputPipeDescriptor);
-	if(stdinRedirect == -1)
-		defaultErrorBehavior("There was a problem duplicating the par-shell pipe!");
-	if(close(inputPipeDescriptor))
-		defaultErrorBehavior("There was a problem closing a pipe!");
+	errClose(fileno(stdin));
+	stdinRedirect = errDup(inputPipeDescriptor);
+	errClose(inputPipeDescriptor);
 
 	/**
 	 * Reads input from the communication pipe, and tries to start a process running
@@ -257,8 +243,8 @@ int main(int argc, char* argv[]){
 		/* If a new terminal id started we insert him in the list */
 		if(inputVector[0] && !strcmp(inputVector[0], NEWTERMINALID)){
 			if(!lst_push(terminalList, atoi(inputVector[1])))
-				defaultErrorBehavior("ERROR: Couldn't push an element to the list!");
-			printf("new terminal %d\n", atoi(inputVector[1]));
+				defaultErrorBehavior(ERR_LISTINSERT);
+			printf("New terminal launched with pid: %d\n", atoi(inputVector[1]));
 			free(inputVector[0]);
 			inputVector[0] = NULL; /* Prevents it from trying to exec this command */
 		}
@@ -266,18 +252,14 @@ int main(int argc, char* argv[]){
 		/* If an existing terminal was closed we remove him from the list */
 		if(inputVector[0] && !strcmp(inputVector[0], CLOSINGTERMINAL)){
 			if(!lst_remove(terminalList, atoi(inputVector[1])))
-				defaultErrorBehavior("ERROR: Couldn't remove an element from the list!");
-			printf("removed %d\n", atoi(inputVector[1]));
+				defaultErrorBehavior(ERR_LISTREMOVE);
+			printf("Terminal terminated connection - pid : %d\n", atoi(inputVector[1]));
 			if(lst_sizeof(terminalList) == 0){
 				/* If there are no more open terminals we redirect again */
 				inputPipeDescriptor = errOpen(INPUTPIPENAME, O_RDONLY);
-				if(close(stdinRedirect))
-					defaultErrorBehavior("There was a problem closing stdinRedirect!");
-				stdinRedirect = dup(inputPipeDescriptor);
-				if(stdinRedirect == -1)
-					defaultErrorBehavior("There was a problem duplicating the par-shell pipe!");
-				if(close(inputPipeDescriptor))
-					defaultErrorBehavior("There was a problem closing a pipe!");			
+				errClose(stdinRedirect);
+				errDup(inputPipeDescriptor);
+				errClose(inputPipeDescriptor);			
 			}
 			free(inputVector[0]);
 			inputVector[0] = NULL; /* Prevents it from trying to exec this command */
@@ -287,7 +269,7 @@ int main(int argc, char* argv[]){
 		if(inputVector[0] != NULL){
 
 			/* Prints what was read and his arguments */
-			printf("read a: %s", inputVector[0]);
+			printf("Executing program: %s", inputVector[0]);
 			for(i = 1; inputVector[i] != NULL; i++)
 				printf(" %s", inputVector[i]);
 			printf("\n");
@@ -304,7 +286,7 @@ int main(int argc, char* argv[]){
 			forkId = fork();
 
 			if(forkId < 0)
-				defaultErrorBehavior("Couldn't fork!");
+				defaultErrorBehavior(ERR_FORK);
 
 			else if (forkId > 0){
 				/**
@@ -313,7 +295,7 @@ int main(int argc, char* argv[]){
 				 * the allocated memory used to save the user input.
 				 **/
 				if(!insert_new_process(processList, forkId, GET_CURRENT_TIME(), inputVector[0]))
-					defaultErrorBehavior("Can't keep track of a child process. Exiting.");
+					defaultErrorBehavior(ERR_LISTINSERT);
 
 				/* Signals so that the monitoring thread can wait() on the ran processes. */
 				errMutexLock(&g_condMutex, ERR_LOCKCONDVARMUTEX);
@@ -345,7 +327,7 @@ int main(int argc, char* argv[]){
 	 			close(outputFileDescriptor);
 
 				execv(inputVector[0], inputVector);
-				defaultErrorBehavior("Couldn't execv a program.");
+				defaultErrorBehavior(ERR_EXECV);
 			}
 			/* We unlock because we ensured that the monitor thread couldn't write
 		   	on list, even if the child was already a zombie */

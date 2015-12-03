@@ -17,11 +17,9 @@ int writePipeDescriptor, statsFileDescriptor;
 void interruptionExit(int s){
 	/* This is the normal exit */
 	char buffer[MAX_BUF];
-	if(!sprintf(buffer, "%s %d\n", CLOSINGTERMINAL, getpid()))
-		defaultErrorBehavior("There was a problem making the pipes message!");
+	sprintf(buffer, "%s %d\n", CLOSINGTERMINAL, getpid());
 	errWriteToPipe(buffer, writePipeDescriptor);
-	if(close(writePipeDescriptor))
-		defaultErrorBehavior("There was a problem closing par-shell pipe!");
+	errClose(writePipeDescriptor);
 	exit(EXIT_SUCCESS);
 }
 
@@ -46,12 +44,10 @@ int main(int argc, char** argv){
 	}
 	writePipe = argv[1];
 	writePipeDescriptor = errOpen(writePipe, O_WRONLY);
-	if((signal(SIGINT, interruptionExit)) == SIG_ERR)
-		defaultErrorBehavior("There was a problem changing the signal handler for SIGINT!");
+	errSignal(SIGINT, interruptionExit);
 
 	/* Sends a message with this terminal's PID to the main program */
-	if(!sprintf(buffer, "%s %d\n", NEWTERMINALID, getpid()))
-		defaultErrorBehavior("There was a problem making a message!");
+	sprintf(buffer, "%s %d\n", NEWTERMINALID, getpid());
 	errWriteToPipe(buffer, writePipeDescriptor);
 	printf("par-shell@%s $ ", writePipe);
 	while((!specialCommand(inputString) || specialCommand(inputString) == STATS_COMMAND) && fgets(inputString, MAX_BUF, stdin)){
@@ -63,13 +59,13 @@ int main(int argc, char** argv){
 				break;
 
 			case STATS_COMMAND:
-				statsfile = fopen(STATSFILE, "r");
+				statsfile = errFOpen(STATSFILE, "r");
 				printf("================STATS================\n");
 				fgets(buffer, MAX_BUF ,statsfile);
 				printf("%s", buffer);
 				fgets(buffer, MAX_BUF ,statsfile);
 				printf("%s", buffer);
-				fclose(statsfile);
+				errFClose(statsfile);
 				printf("par-shell@%s $ ", writePipe);	
 				break;
 

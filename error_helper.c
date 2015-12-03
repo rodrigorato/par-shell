@@ -66,10 +66,50 @@ int errOpen(char* filename, int mode){
 	return i;
 }
 
+FILE* errFOpen(char* filename, char* flags){
+	FILE* fd;
+	fd = fopen(filename, flags);
+	if(fd == NULL)
+		defaultErrorBehavior(ERR_OPENFILE);
+	return fd;
+}
+
 int errOpenPerms(char* filename, int mode, int perms){
 	int i;
 	i = open(filename, mode, perms);
 	if(i == -1)
 		defaultErrorBehavior(ERR_OPENFILE);
+	return i;
+}
+
+void errClose(int fd){
+	if(close(fd))
+		defaultErrorBehavior(ERR_CLOSEFILE);
+}
+
+void errFClose(FILE* fd){
+	if(fclose(fd))
+		defaultErrorBehavior(ERR_CLOSEFILE);
+}
+
+void errSignal(int sig, void* routine){
+	if(signal(sig, routine) == SIG_ERR)
+		defaultErrorBehavior(ERR_SIGNAL);
+}
+
+void errFflush(FILE* fd){
+	if(fflush(fd))
+		defaultErrorBehavior(ERR_FFLUSH);
+}
+
+void errUnlink(char* path){
+	if(unlink(path))
+		defaultErrorBehavior(ERR_UNLINK);
+}
+
+int errDup(int fd){
+	int i;
+	if((i = dup(fd)) == -1)
+		defaultErrorBehavior(ERR_DUP);
 	return i;
 }

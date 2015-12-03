@@ -6,6 +6,7 @@
 #include <pthread.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <signal.h>
 
 #define PATHNAME_MAX_ARGS 5 /* Program can be ran with 5 arguments */
 #define INPUTVECTOR_SIZE PATHNAME_MAX_ARGS+2 /* vector[0] = program name; vector[-1] = NULL */
@@ -13,10 +14,10 @@
 #define MAX_BUF 1024 /* The communication's max buffer size */
 #define MAXLOGLINESIZE 256
 #define MAXFILENAMELENGTH 28 /* The max filename length */
-#define INPUTPIPENAME "/tmp/par-shell-in" /* The input pipe's name */
+#define INPUTPIPENAME "par-shell-in" /* The input pipe's name */
 #define NEWTERMINALID "new_terminal_pid"
 #define CLOSINGTERMINAL "closing_terminal_pid"
-#define STATSFILE "/tmp/par-shell-stats.txt"
+#define STATSFILE "par-shell-stats.txt"
 #define NORMAL_COMMAND 0
 #define EXIT_COMMAND 1
 #define EXIT_GLOBAL_COMMAND 2 
@@ -81,8 +82,29 @@ void errReadFromPipe(char* reads, int pipeDescriptor, int maxBufSize);
 /* Tries to open filename returning its filedescriptor */
 int errOpen(char* filename, int mode);
 
+/* Tries to open a fopen() */
+FILE* errFOpen(char* filename, char* flags);
+
 /* Tries to open filename, with permissions returning its filedescriptor */
 int errOpenPerms(char* filename, int mode, int perms);
+
+/* Tries to close the file with the fd it receives */
+void errClose(int fd);
+
+/* Tries to fclose() */
+void errFClose(FILE* fd);
+
+/* Associates a signal with a routine */
+void errSignal(int sig, void* routine);
+
+/* Tries to flush a file */
+void errFflush(FILE* fd);
+
+/* Tries to unlink a file */
+void errUnlink(char* path);
+
+/* Tries to dup */
+int errDup(int fd);
 
 /* DEFAULT ERROR MESSAGES DEFINITIONS: */
 #define ERR_DESTROYMUTEX 		"ERROR: Couldn't destroy a Mutex!"
@@ -99,7 +121,20 @@ int errOpenPerms(char* filename, int mode, int perms);
 #define ERR_WRONGARGUMENTS		"ERROR: Wrong number of arguments!"
 #define ERR_WRITETOPIPE			"ERROR: Couldn't write to a pipe!"
 #define ERR_READFROMPIPE		"ERROR: Couldn't read from a pipe!"
-#define ERR_OPENFILE			"ERROR: Couldn't open file!"
-
+#define ERR_OPENFILE			"ERROR: Couldn't open a file!"
+#define ERR_CLOSEFILE			"ERROR: Couldn't close a file!"
+#define ERR_WRITETOFILE			"ERROR: Couldn't write to a file!"
+#define ERR_FFLUSH				"ERROR: Couldn't flush a file!"
+#define ERR_SIGNAL 				"ERROR: Couldn't associate a routine to a signal!"
+#define ERR_UNLINK				"ERROR: Couldn't unlink a file!"
+#define ERR_THREADJOIN			"ERROR: Couldn't join a thread!"
+#define ERR_ALLOCLIST			"ERROR: Couldn't create an instance of a list!"
+#define ERR_WATCHERTHREADCREATE "ERROR: Couldn't start a watcher thread!"
+#define ERR_MKFIFO				"ERROR: There was a problem making the par-shell pipe!"
+#define ERR_DUP					"ERROR: Couldn't dup!"
+#define ERR_LISTINSERT			"ERROR: Couldn't insert a new element to the list!"
+#define ERR_LISTREMOVE			"ERROR: Couldn't remove an element from the list!"
+#define ERR_FORK				"ERROR: Couldn't fork a new process!"
+#define ERR_EXECV				"ERROR: Couldn't execv a program!"
 
 #endif /* __ERROR_HELPER_H__ */
