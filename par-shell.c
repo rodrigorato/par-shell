@@ -141,7 +141,7 @@ void killAllTerminals(int s){
 	/* This loop will go trought all the known terminals sending them kill signals */
 	while((pid = lst_pop(terminalList))){
 		if(kill(pid, SIGKILL)){
-			defaultErrorBehavior("There was a problem killing one of the terminals!");
+			printf("There was a problem killing one of the terminals!");
 		}
 	}
 	lst_destroy(terminalList);
