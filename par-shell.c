@@ -248,8 +248,8 @@ int main(int argc, char* argv[]){
 	 * Initializes a named pipe, opens it (eventually locking on open)
 	 * and dups it to stdin so we can read from it instead of stdin directly.
 	 **/
-	 if(mkfifo(INPUTPIPENAME, 0666))
-	 	defaultErrorBehavior("There was a problem making the par-shell pipe!");
+	if(mkfifo(INPUTPIPENAME, 0666))
+		defaultErrorBehavior("There was a problem making the par-shell pipe!");
 
 	/* Tries to open the communication pipe */
 	inputPipeDescriptor = open(INPUTPIPENAME, O_RDONLY);

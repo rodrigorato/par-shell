@@ -15,10 +15,13 @@
 int writePipeDescriptor, statsFileDescriptor;
 
 void interruptionExit(int s){
+	/* This is the normal exit */
 	char buffer[MAX_BUF];
-	sprintf(buffer, "%s %d\n", CLOSINGTERMINAL, getpid());
+	if(!sprintf(buffer, "%s %d\n", CLOSINGTERMINAL, getpid()))
+		defaultErrorBehavior("There was a problem making the pipes message!");
 	errWriteToPipe(buffer, writePipeDescriptor);
-	close(writePipeDescriptor);
+	if(close(writePipeDescriptor))
+		defaultErrorBehavior("There was a problem closing par-shell pipe!");
 	exit(EXIT_SUCCESS);
 }
 
@@ -41,12 +44,15 @@ int main(int argc, char** argv){
 		exit(EXIT_FAILURE);
 	}
 	writePipe = argv[1];
-	//apanhar erros
 	writePipeDescriptor = open(writePipe, O_WRONLY);
-	signal(SIGINT, interruptionExit);
+	if(writePipeDescriptor == -1)
+		defaultErrorBehavior("There was a problem opening the given pipe as argument!");
+	if((signal(SIGINT, interruptionExit)) == SIG_ERR)
+		defaultErrorBehavior("There was a problem changing the signal handler for SIGINT!");
 
 	/* Sends a message with this terminal's PID to the main program */
-	sprintf(buffer, "%s %d\n", NEWTERMINALID, getpid());
+	if(!sprintf(buffer, "%s %d\n", NEWTERMINALID, getpid()))
+		defaultErrorBehavior("There was a problem making a message!");
 	errWriteToPipe(buffer, writePipeDescriptor);
 	printf("par-shell@%s $ ", writePipe);
 	while((!specialCommand(inputString) || specialCommand(inputString) == STATS_COMMAND) && fgets(inputString, MAX_BUF, stdin)){
@@ -58,16 +64,23 @@ int main(int argc, char** argv){
 				break;
 
 			case STATS_COMMAND:
-				sprintf(buffer, "%s %d\n", TERMINALSTATS, getpid());
+				if(!sprintf(buffer, "%s %d\n", TERMINALSTATS, getpid()))
+					defaultErrorBehavior("There was a problem making a message!");
 				errWriteToPipe(buffer, writePipeDescriptor);
-				sprintf(buffer, "%s%s%d", STATSDIR, TERMINALSTATS, getpid());
-				mkfifo(buffer, 0666);
+				if(!sprintf(buffer, "%s%s%d", STATSDIR, TERMINALSTATS, getpid()))
+					defaultErrorBehavior("There was a problem making a message!");
+				if(mkfifo(buffer, 0666))
+	 				defaultErrorBehavior("There was a problem making the message receiver pipe!");
 				statsFileDescriptor = open(buffer, O_RDONLY);
+				if(statsFileDescriptor == -1)
+					defaultErrorBehavior("There was a problem opening the message receiver pipe!");
 				errReadFromPipe(message, statsFileDescriptor, MAX_BUF);
 				printf("--PAR-SHELL STATS--\n");
 				printf("%s\n", message);
-				close(statsFileDescriptor);
-				unlink(buffer);			
+				if(close(statsFileDescriptor))
+					defaultErrorBehavior("There was a problem closing the message receiver pipe!");
+				if(unlink(buffer))
+					defaultErrorBehavior("There was a problem unlinking the message receiver pipe!");
 				printf("par-shell@%s $ ", writePipe);	
 				break;
 
@@ -81,6 +94,5 @@ int main(int argc, char** argv){
 				break;
 		}
 	}
-
 	interruptionExit(0);
 }
