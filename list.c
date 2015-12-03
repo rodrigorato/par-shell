@@ -30,7 +30,7 @@ void lst_destroy(list_t *list){
 	item = list->first;
 	while (item != NULL){
 		nextitem = item->next;
-		//free(item->cmd);
+		free(item->cmd);
 		free(item);
 		item = nextitem;
   	}

@@ -278,6 +278,7 @@ int main(int argc, char* argv[]){
 			if(!lst_push(terminalList, atoi(inputVector[1])))
 				defaultErrorBehavior("ERROR: Couldn't push an element to the list!");
 			printf("new terminal %d\n", atoi(inputVector[1]));
+			free(inputVector[0]);
 			inputVector[0] = NULL; /* Prevents it from trying to exec this command */
 		}
 
@@ -299,6 +300,7 @@ int main(int argc, char* argv[]){
 				if(close(inputPipeDescriptor))
 					defaultErrorBehavior("There was a problem closing a pipe!");			
 			}
+			free(inputVector[0]);
 			inputVector[0] = NULL; /* Prevents it from trying to exec this command */
 		}
 
@@ -306,7 +308,8 @@ int main(int argc, char* argv[]){
 		if(inputVector[0] && !strcmp(inputVector[0], TERMINALSTATS)){
 			i = atoi(inputVector[1]);
 			if(pthread_create(&statsThread, 0, terminalSendStats, (void*) &i))
-				defaultErrorBehavior("Couldn't start a stats writer thread."); 
+				defaultErrorBehavior("Couldn't start a stats writer thread.");
+			free(inputVector[0]);
 			inputVector[0] = NULL;
 		}
 
