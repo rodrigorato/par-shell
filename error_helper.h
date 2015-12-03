@@ -16,8 +16,7 @@
 #define INPUTPIPENAME "/tmp/par-shell-in" /* The input pipe's name */
 #define NEWTERMINALID "new_terminal_pid"
 #define CLOSINGTERMINAL "closing_terminal_pid"
-#define TERMINALSTATS "stats_terminal_pid"
-#define STATSDIR "/tmp/"
+#define STATSFILE "/tmp/par-shell-stats.txt"
 #define NORMAL_COMMAND 0
 #define EXIT_COMMAND 1
 #define EXIT_GLOBAL_COMMAND 2 
@@ -79,6 +78,11 @@ void errWriteToPipe(char* sends, int pipeDescriptor);
 /* Reads a "string" from a named pipe, sent by the function above */
 void errReadFromPipe(char* reads, int pipeDescriptor, int maxBufSize);
 
+/* Tries to open filename returning its filedescriptor */
+int errOpen(char* filename, int mode);
+
+/* Tries to open filename, with permissions returning its filedescriptor */
+int errOpenPerms(char* filename, int mode, int perms);
 
 /* DEFAULT ERROR MESSAGES DEFINITIONS: */
 #define ERR_DESTROYMUTEX 		"ERROR: Couldn't destroy a Mutex!"
@@ -95,6 +99,7 @@ void errReadFromPipe(char* reads, int pipeDescriptor, int maxBufSize);
 #define ERR_WRONGARGUMENTS		"ERROR: Wrong number of arguments!"
 #define ERR_WRITETOPIPE			"ERROR: Couldn't write to a pipe!"
 #define ERR_READFROMPIPE		"ERROR: Couldn't read from a pipe!"
+#define ERR_OPENFILE			"ERROR: Couldn't open file!"
 
 
 #endif /* __ERROR_HELPER_H__ */

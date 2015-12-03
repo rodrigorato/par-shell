@@ -22,6 +22,7 @@ pthread_cond_t g_canWaitProcess, g_canRunProcess;
 int g_runningProcesses = 0, totalExecutionTime = 0;
 int currentIteration = -1; // we start at iteration0;
 FILE* logfile;
+FILE* statsfile;
 list_t *terminalList;
 list_t *processList;
 pthread_t watcherThread;
@@ -34,6 +35,21 @@ pthread_t statsThread;
  **/
 char* inputVector[INPUTVECTOR_SIZE] = {};
 
+void writeStats(){
+	int runningProcesses, execTime;
+	if((statsfile = fopen(STATSFILE, "w")) == NULL)
+		defaultErrorBehavior("FIXME");
+	errMutexLock(&g_condMutex, ERR_LOCKMUTEX);
+	runningProcesses = g_runningProcesses;
+	execTime = totalExecutionTime;
+	errMutexUnlock(&g_condMutex,ERR_UNLOCKMUTEX);
+	if(!fprintf(statsfile, "Active processes count: \t%d\nTotal execution time: \t\t%d\n", runningProcesses, execTime))
+		defaultErrorBehavior("");
+ 	if(fflush(statsfile))
+ 		defaultErrorBehavior("Couldn't flush the log.txt file!");
+ 	if(fclose(statsfile))
+ 		defaultErrorBehavior("FIXME");
+}
 
 void *gottaWatchEmAll(void *voidList){
 	/**
@@ -96,45 +112,9 @@ void *gottaWatchEmAll(void *voidList){
  		if(fflush(logfile))
  			defaultErrorBehavior("Couldn't flush the log.txt file!");
 
+		writeStats();
 		currentIteration++;
 	}
-}
-
-void* terminalSendStats(void* voidTerminalPid){
-	/**
-	 *	This Thread is lauched everytime the 
-	 * 	par-shell catches a stats request.
-	 *	Will open the pipe and write the message 
-	 * 	there so the terminal can receive it.
-	 **/
-	int statsFileDescriptor, *terminalPid = (int*) voidTerminalPid;
-	int numActive, execTime;
-	char filename[MAX_BUF], message[MAX_BUF];
-
-	/* Constructs the pipe name, based on the pid that requested stats */
-	if(!sprintf(filename, "%s%s%d", STATSDIR, TERMINALSTATS, *terminalPid))
-		defaultErrorBehavior("Couldnt make the filename to send stats!");
-
-	/* We use the lists lock so we can get the time and the number of processes correctly */
-	lst_lock(processList);
-	execTime = totalExecutionTime;
-	numActive = lst_numactive(processList);
-	lst_unlock(processList);
-
-	/* Constructs the message to send trough pipe */
-	if(!sprintf(message, "Active processes count: %d\nTotal execution time: %d", numActive, execTime))
-		defaultErrorBehavior("Couldnt make message to respond to stats!");
-
-	/* Tryes to open the file constructed by filename and writes the message*/
-	statsFileDescriptor = open(filename, O_WRONLY);
-	if(statsFileDescriptor == -1)
-		defaultErrorBehavior("Couldnt open pipe to send stats message!");
-	errWriteToPipe(message, statsFileDescriptor);
-
-	/* Closes the pipe and exits the thread , not returning any value */
-	if(close(statsFileDescriptor))
-		defaultErrorBehavior("There was some problem closing a pipe!");
-	pthread_exit(NULL);
 }
 
 void killAllTerminals(int s){
@@ -147,9 +127,7 @@ void killAllTerminals(int s){
 
 	/* This loop will go trought all the known terminals sending them kill signals */
 	while((pid = lst_pop(terminalList))){
-		if(kill(pid, SIGKILL)){
-			printf("There was a problem killing one of the terminals!");
-		}
+		kill(pid, SIGKILL);
 	}
 	lst_destroy(terminalList);
 
@@ -185,6 +163,9 @@ void killAllTerminals(int s){
  	/* Closing the log file */
  	if(fclose(logfile))
  		defaultErrorBehavior("Couldn't close the log.txt file!");
+	
+	if(unlink(STATSFILE))
+		defaultErrorBehavior("FIXME");
 
 	/* Prints info about every child process to the user */
 	lst_print(processList);
@@ -214,8 +195,7 @@ int main(int argc, char* argv[]){
 	/**
 	 *	Here we declare 3 log lines so we can read the log file.
 	 **/
-	char* logLine1[MAXLOGLINESIZE], logLine2[MAXLOGLINESIZE], logLine3[MAXLOGLINESIZE];
-
+	char logLine1[MAXLOGLINESIZE], logLine2[MAXLOGLINESIZE], logLine3[MAXLOGLINESIZE];
 
 	/* Open the log file for reading and appending */
 	if((logfile = fopen("log.txt", "a+")) == NULL)
@@ -255,9 +235,7 @@ int main(int argc, char* argv[]){
 		defaultErrorBehavior("There was a problem making the par-shell pipe!");
 
 	/* Tries to open the communication pipe */
-	inputPipeDescriptor = open(INPUTPIPENAME, O_RDONLY);
-	if(inputPipeDescriptor == -1)
-		defaultErrorBehavior("There was a problem opening the par-shell pipe!");
+	inputPipeDescriptor = errOpen(INPUTPIPENAME, O_RDONLY);
 
 	/* Redirection of stdin to the pipe, by closing stdin and duplicating the open pipe */
 	if(close(fileno(stdin)))
@@ -292,9 +270,7 @@ int main(int argc, char* argv[]){
 			printf("removed %d\n", atoi(inputVector[1]));
 			if(lst_sizeof(terminalList) == 0){
 				/* If there are no more open terminals we redirect again */
-				inputPipeDescriptor = open(INPUTPIPENAME, O_RDONLY);
-				if(inputPipeDescriptor == -1)
-					defaultErrorBehavior("There was a problem opening par-shell pipe!");
+				inputPipeDescriptor = errOpen(INPUTPIPENAME, O_RDONLY);
 				if(close(stdinRedirect))
 					defaultErrorBehavior("There was a problem closing stdinRedirect!");
 				stdinRedirect = dup(inputPipeDescriptor);
@@ -306,17 +282,6 @@ int main(int argc, char* argv[]){
 			free(inputVector[0]);
 			inputVector[0] = NULL; /* Prevents it from trying to exec this command */
 		}
-
-		/* If a terminal asked for stats we start the new thread that responds to it */
-		if(inputVector[0] && !strcmp(inputVector[0], TERMINALSTATS)){
-			i = atoi(inputVector[1]);
-			if(pthread_create(&statsThread, 0, terminalSendStats, (void*) &i))
-				defaultErrorBehavior("Couldn't start a stats writer thread.");
-			free(inputVector[0]);
-			inputVector[0] = NULL;
-		}
-
-
 
 		/* If any of the terminals presses enter we just stand-by to read input again */
 		if(inputVector[0] != NULL){
@@ -373,8 +338,8 @@ int main(int argc, char* argv[]){
 				 **/
 				char name_string[MAXFILENAMELENGTH];
 				sprintf(name_string, "par-shell-out-%d.txt", getpid());
+				outputFileDescriptor = errOpenPerms(name_string, O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR);
 
-				outputFileDescriptor = open(name_string, O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR);
 	 			close(fileno(stdout));
 	 			dup(outputFileDescriptor);
 	 			close(outputFileDescriptor);
@@ -386,7 +351,7 @@ int main(int argc, char* argv[]){
 		   	on list, even if the child was already a zombie */
 			lst_unlock(processList);
 		}
-
+		writeStats();
 		readLineArguments(inputVector, INPUTVECTOR_SIZE);
 	}
 

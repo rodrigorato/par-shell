@@ -58,4 +58,18 @@ void errReadFromPipe(char* reads, int pipeDescriptor, int maxBufSize){
 	reads[readChars] = '\0';
 }
 
+int errOpen(char* filename, int mode){
+	int i;
+	i = open(filename, mode);
+	if(i == -1)
+		defaultErrorBehavior(ERR_OPENFILE);
+	return i;
+}
 
+int errOpenPerms(char* filename, int mode, int perms){
+	int i;
+	i = open(filename, mode, perms);
+	if(i == -1)
+		defaultErrorBehavior(ERR_OPENFILE);
+	return i;
+}
