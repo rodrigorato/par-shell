@@ -27,6 +27,13 @@ list_t *processList;
 pthread_t watcherThread;
 pthread_t statsThread;
 
+/**
+ * Declares the vector we use to store inputs and sets all positions to NULL
+ * 0th index is the program's name, followed by it's arguments (max 5)
+ * The index after the last argument is set to NULL.
+ **/
+char* inputVector[INPUTVECTOR_SIZE] = {};
+
 
 void *gottaWatchEmAll(void *voidList){
 	/**
@@ -103,6 +110,8 @@ void* terminalSendStats(void* voidTerminalPid){
 	int statsFileDescriptor, *terminalPid = (int*) voidTerminalPid;
 	int numActive, execTime;
 	char filename[MAX_BUF], message[MAX_BUF];
+
+	free(inputVector[0]);
 
 	/* Constructs the pipe name, based on the pid that requested stats */
 	if(!sprintf(filename, "%s%s%d", STATSDIR, TERMINALSTATS, *terminalPid))
@@ -201,12 +210,6 @@ int main(int argc, char* argv[]){
 		defaultErrorBehavior("Couldn't create an instance of a list!");
 	if(!terminalList)
 		defaultErrorBehavior("Couldn't create an instance of a list!");
-	/**
-	 * Declares the vector we use to store inputs and sets all positions to NULL
-	 * 0th index is the program's name, followed by it's arguments (max 5)
-	 * The index after the last argument is set to NULL.
-	 **/
-	char* inputVector[INPUTVECTOR_SIZE] = {};
 
 	/**
 	 *	Here we declare 3 log lines so we can read the log file.
