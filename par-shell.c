@@ -111,8 +111,6 @@ void* terminalSendStats(void* voidTerminalPid){
 	int numActive, execTime;
 	char filename[MAX_BUF], message[MAX_BUF];
 
-	free(inputVector[0]);
-
 	/* Constructs the pipe name, based on the pid that requested stats */
 	if(!sprintf(filename, "%s%s%d", STATSDIR, TERMINALSTATS, *terminalPid))
 		defaultErrorBehavior("Couldnt make the filename to send stats!");
@@ -154,6 +152,8 @@ void killAllTerminals(int s){
 		}
 	}
 	lst_destroy(terminalList);
+
+	free(inputVector[0]);
 	
 	/* Unlinks the named pipe used for reading inputs */
 	if(unlink(INPUTPIPENAME))
