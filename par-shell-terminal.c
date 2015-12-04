@@ -4,7 +4,7 @@
 #include <sys/stat.h> 
 #include <signal.h>
 #include "commandlinereader.h"
-#include "error_helper.h"
+#include "helper.h"
 
 /**
  *  All the macros (and error preventing functions) we use

@@ -1,5 +1,5 @@
-#ifndef __ERROR_HELPER_H__
-#define __ERROR_HELPER_H__
+#ifndef __HELPER_H__
+#define __HELPER_H__
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

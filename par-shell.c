@@ -9,7 +9,7 @@
 #include "commandlinereader.h"
 #include "list.h"
 #include "time_helper.h"
-#include "error_helper.h"
+#include "helper.h"
 
 /**
  *  All the macros (and error preventing functions) we use

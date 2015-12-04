@@ -1,4 +1,4 @@
-#include "error_helper.h"
+#include "helper.h"
 
 void defaultErrorBehavior(char* message){
 	fprintf(stderr, "%s\n", message);
