@@ -214,9 +214,6 @@ int main(int argc, char* argv[]){
 	if(pthread_create(&watcherThread, 0, gottaWatchEmAll,(void *)processList))
 		defaultErrorBehavior(ERR_WATCHERTHREADCREATE);
 
-	/* At this moment, if a SIGINT is received, this will proceed to exit normally */
-	errSignal(SIGINT, killAllTerminals);
-
 	/**
 	 * Initializes a named pipe, opens it (eventually locking on open)
 	 * and dups it to stdin so we can read from it instead of stdin directly.
@@ -231,6 +228,9 @@ int main(int argc, char* argv[]){
 	errClose(fileno(stdin));
 	stdinRedirect = errDup(inputPipeDescriptor);
 	errClose(inputPipeDescriptor);
+
+	/* At this moment, if a SIGINT is received, this will proceed to exit normally */
+	errSignal(SIGINT, killAllTerminals);
 
 	/**
 	 * Reads input from the communication pipe, and tries to start a process running
