@@ -244,7 +244,7 @@ int main(int argc, char* argv[]){
 		if(inputVector[0] && !strcmp(inputVector[0], NEWTERMINALID)){
 			if(!lst_push(terminalList, atoi(inputVector[1])))
 				defaultErrorBehavior(ERR_LISTINSERT);
-			printf("New terminal launched with pid: %d\n", atoi(inputVector[1]));
+			printf("New terminal launched - pid: %d\n", atoi(inputVector[1]));
 			free(inputVector[0]);
 			inputVector[0] = NULL; /* Prevents it from trying to exec this command */
 		}
@@ -253,7 +253,7 @@ int main(int argc, char* argv[]){
 		if(inputVector[0] && !strcmp(inputVector[0], CLOSINGTERMINAL)){
 			if(!lst_remove(terminalList, atoi(inputVector[1])))
 				defaultErrorBehavior(ERR_LISTREMOVE);
-			printf("Terminal terminated connection - pid : %d\n", atoi(inputVector[1]));
+			printf("Terminal terminated connection - pid: %d\n", atoi(inputVector[1]));
 			if(lst_sizeof(terminalList) == 0){
 				/* If there are no more open terminals we redirect again */
 				inputPipeDescriptor = errOpen(INPUTPIPENAME, O_RDONLY);
