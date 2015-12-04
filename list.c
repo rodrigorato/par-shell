@@ -60,12 +60,20 @@ int insert_new_process(list_t *list, int pid, time_t starttime, char* cmd){
 
 	if(cmd){
 		item->cmd = (char*) malloc(sizeof(char)*(strlen(cmd)+1));
-		strcpy(item->cmd, cmd);
+		if(item->cmd)
+			strcpy(item->cmd, cmd);
+		else{
+			free(item); return 0;
+		}
 	}
 	else{
 		/* We have to allocate it like so if we want to free it later. */
 		item->cmd = (char*) malloc(sizeof(char)*7);
-		strcpy(item->cmd, "(null)");
+		if(item->cmd)
+			strcpy(item->cmd, "(null)");
+		else{
+			free(item); return 0;
+		}
 	}
 
 	item->next = list->first;
