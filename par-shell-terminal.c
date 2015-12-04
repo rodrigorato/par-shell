@@ -38,7 +38,8 @@ int main(int argc, char** argv){
 	char* writePipe; /* The name of the pipe used to send commands to the par-shell "server" */
 	char inputString[MAX_BUF], buffer[MAX_BUF];
 	FILE *statsfile;
-	if(argc != 2){ /* If the number of specified arguments is incorrect, the program won't run.  */
+
+	if(argc != 2){ /* If the number of specified arguments is incorrect the program won't run.  */
 		defaultErrorBehavior(ERR_WRONGARGUMENTS);
 		exit(EXIT_FAILURE);
 	}
@@ -49,8 +50,10 @@ int main(int argc, char** argv){
 	/* Sends a message with this terminal's PID to the main program */
 	sprintf(buffer, "%s %d\n", NEWTERMINALID, getpid());
 	errWriteToPipe(buffer, writePipeDescriptor);
+
 	printf("par-shell@%s $ ", writePipe);
-	while((!specialCommand(inputString) || specialCommand(inputString) == STATS_COMMAND) && fgets(inputString, MAX_BUF, stdin)){
+	while((!specialCommand(inputString) || specialCommand(inputString) == STATS_COMMAND) 
+		&& fgets(inputString, MAX_BUF, stdin)){
 		switch(specialCommand(inputString)){
 			case NORMAL_COMMAND:
 				/* Perform a normal command - send it to par-shell so it execs it */
@@ -59,11 +62,12 @@ int main(int argc, char** argv){
 				break;
 
 			case STATS_COMMAND:
+				/* Reads the stats to print from the stats file */
 				statsfile = errFOpen(STATSFILE, "r");
-				printf("================STATS================\n");
-				fgets(buffer, MAX_BUF ,statsfile);
+				printf("\t\t  PAR-SHELL STATS\n");
+				fgets(buffer, MAX_BUF, statsfile);
 				printf("%s", buffer);
-				fgets(buffer, MAX_BUF ,statsfile);
+				fgets(buffer, MAX_BUF, statsfile);
 				printf("%s", buffer);
 				errFClose(statsfile);
 				printf("par-shell@%s $ ", writePipe);	
