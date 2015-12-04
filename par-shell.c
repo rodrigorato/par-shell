@@ -182,6 +182,9 @@ int main(int argc, char* argv[]){
 	processList = lst_new();
 	terminalList = lst_new();
 
+	/* At this moment, if a SIGINT is received, this will proceed to exit normally */
+	errSignal(SIGINT, killAllTerminals);
+
 	/* Verifies if the lists were sucessfully initiated */
 	if(!processList)
 		defaultErrorBehavior(ERR_ALLOCLIST);
@@ -231,8 +234,7 @@ int main(int argc, char* argv[]){
 	stdinRedirect = errDup(inputPipeDescriptor);
 	errClose(inputPipeDescriptor);
 
-	/* At this moment, if a SIGINT is received, this will proceed to exit normally */
-	errSignal(SIGINT, killAllTerminals);
+	
 
 	/**
 	 * Reads input from the communication pipe, and tries to start a process running
@@ -321,6 +323,9 @@ int main(int argc, char* argv[]){
 				char name_string[MAXFILENAMELENGTH];
 				sprintf(name_string, "par-shell-out-%d.txt", getpid());
 				outputFileDescriptor = errOpenPerms(name_string, O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR);
+
+				/* Used to make the child processes ignore the SIGINT signal */
+				errSignal(SIGINT, SIG_IGN);
 
 	 			close(fileno(stdout));
 	 			dup(outputFileDescriptor);
