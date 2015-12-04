@@ -36,6 +36,7 @@ pthread_t statsThread;
 char* inputVector[INPUTVECTOR_SIZE] = {};
 
 void writeStats(){
+	/* Will write the stats needed for the terminals into the file specified by STATSFILE */
 	int runningProcesses, execTime;
 	statsfile = errFOpen(STATSFILE, "w");
 	errMutexLock(&g_condMutex, ERR_LOCKMUTEX);
@@ -116,15 +117,15 @@ void *gottaWatchEmAll(void *voidList){
 void killAllTerminals(int s){
 	/** 
 	 *	Kills all running terminals and deallocates
-	 * 	all the memory for the list. Like exiting the program.
-	 * 	if any of the terminal
+	 * 	all the memory for the list. 
+	 *  Program exiting routine.
 	 **/
 	int pid;
 
-	/* This loop will go trought all the known terminals sending them kill signals */
-	while((pid = lst_pop(terminalList))){
+	/* This loop will go through all the known terminals sending them kill signals */
+	while((pid = lst_pop(terminalList)))
 		kill(pid, SIGKILL);
-	}
+
 	lst_destroy(terminalList);
 
 	free(inputVector[0]);
@@ -157,6 +158,7 @@ void killAllTerminals(int s){
  	/* Closing the log file */
  	errFClose(logfile);
 	
+	/* Unlinks the stats file */
 	errUnlink(STATSFILE);
 
 	/* Prints info about every child process to the user */
@@ -174,6 +176,8 @@ int main(int argc, char* argv[]){
 	/**
 	 * Initializes a list where we store the processes ran by the shell
 	 * along with some information about each process. (check list.h)
+	 * And a list for every terminal associated with this instance 
+	 * of the par-shell program.
 	 **/
 	processList = lst_new();
 	terminalList = lst_new();
@@ -184,9 +188,7 @@ int main(int argc, char* argv[]){
 	if(!terminalList)
 		defaultErrorBehavior(ERR_ALLOCLIST);
 
-	/**
-	 *	Here we declare 3 log lines so we can read the log file.
-	 **/
+	/* Here we declare 3 log lines so we can read the log file. */
 	char logLine1[MAXLOGLINESIZE], logLine2[MAXLOGLINESIZE], logLine3[MAXLOGLINESIZE];
 
 	/* Open the log file for reading and appending */
@@ -200,7 +202,7 @@ int main(int argc, char* argv[]){
 		sscanf(logLine3, "%[^:]: %d %s", logLine2, &procTime, logLine2); // so we just use logLine2 as a buffer
 	}
 	totalExecutionTime+=procTime;
-	currentIteration++; // if there are no iterations keep it as 0
+	currentIteration++;
 
 	/* Initializes the mutex associated with the condition variables. */
 	errMutexInit(&g_condMutex, ERR_INITCONDVARMUTEX);
@@ -312,9 +314,7 @@ int main(int argc, char* argv[]){
 				 *
 				 * WARNING: If the program wasn't found,
 				 *		    the process exits with EXIT_FAILURE.
-				 **/
-
-				/**
+				 *
 				 * We will now redirect the child process's output to a file named:
 				 * par-shell-out-PID.txt : PID = the child processes pid
 				 **/
