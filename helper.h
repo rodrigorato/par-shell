@@ -8,20 +8,31 @@
 #include <fcntl.h>
 #include <signal.h>
 
-#define PATHNAME_MAX_ARGS 5 /* Program can be ran with 5 arguments */
-#define INPUTVECTOR_SIZE PATHNAME_MAX_ARGS+2 /* vector[0] = program name; vector[-1] = NULL */
-#define MAXPAR 4 /* Set it to the number of cores in your machine. */
-#define MAX_BUF 1024 /* The communication's max buffer size */
-#define MAXLOGLINESIZE 256
-#define MAXFILENAMELENGTH 28 /* The max filename length */
-#define INPUTPIPENAME "par-shell-in" /* The input pipe's name */
-#define NEWTERMINALID "new_terminal_pid"
-#define CLOSINGTERMINAL "closing_terminal_pid"
-#define STATSFILE "par-shell-stats.txt"
-#define NORMAL_COMMAND 0
-#define EXIT_COMMAND 1
+/* Sets the max array size of arguments we will read */
+/* [prog name, arg1, arg2, arg3, arg4, arg5, NULL] */
+#define PATHNAME_MAX_ARGS 	5
+#define INPUTVECTOR_SIZE 	PATHNAME_MAX_ARGS+2 
+
+/* Limits the number of programs running at a time */
+/* Should be set to the number of cores in your machine. */
+#define MAXPAR 				4 
+
+/* Sets the maximum buffer sizes for the buffers used in the program */
+#define MAX_BUF 			1024
+#define MAXLOGLINESIZE 		256
+#define MAXFILENAMELENGTH 	28
+
+/* The file names used */
+#define INPUTPIPENAME 		"par-shell-in" 
+#define STATSFILE 			"par-shell-stats.txt"
+
+/* Commands sent between the terminals and the par-shell program */
+#define NEWTERMINALID 		"new_terminal_pid"
+#define CLOSINGTERMINAL 	"closing_terminal_pid"
+#define NORMAL_COMMAND 		0
+#define EXIT_COMMAND 		1
 #define EXIT_GLOBAL_COMMAND 2 
-#define STATS_COMMAND 3
+#define STATS_COMMAND 		3
 
 
 /**
